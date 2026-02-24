@@ -1,0 +1,135 @@
+============================================================
+Whisper Baseline Results
+Model: medium
+Date: 2026-02-24 18:21:16.371455
+============================================================
+
+
+TRAIN Split:
+  Utterances: 92
+  WER: 0.9700
+  CER: 0.5693
+
+  Language Distribution:
+    de: 27
+    sl: 20
+    it: 7
+    la: 7
+    sq: 6
+    yi: 6
+    pt: 4
+    oc: 4
+    nl: 3
+    lt: 2
+    en: 2
+    cy: 1
+    bs: 1
+    lv: 1
+    ca: 1
+
+  Example transcriptions:
+    Ref 1: Il davos temps vegn bia discutau dalla rolla dalla dunna ella baselgia catolica, co vesis vus quella rolla?
+    Hyp 1: Ilde bo ostemcev in bjadiško taj odala rola, odala duna, ela bazelja katolika, ko vas je izvu skoela rola?
+    Lang 1: sl
+
+    Ref 2: Suenter ina prelecziun facultativa en dretg da bancas el studi ha quei plaschiu fetg bein a mi. Quei era ina giuvna professura lu aunc ah fetg ord la practica, ualti auter che tschels professurs, ah cun in cun ina gronda passiun per la materia e quei e quei ha fascinau mai, e cuort suenter ah duront il studium hai lu encuretg ina lavur tier ina banca
+    Hyp 2: Ich habe eine Prälektion der Fakultät und der Drehung der Banken. Ich habe die Freude, mit den jüngeren Professuren die Praktika zu machen, die Autos und die Professuren zu machen, mit einer runden Person, mit der Materie. Das Faszinierende ist, dass ich kurz vor dem Studium in der Banken ein Werk in der Banken war.
+    Lang 2: de
+
+    Ref 3: E per veser quei stuein nus far in viadi da rodund 80 tochen varga 100 kilometers sut la tiara. Schi lunsch sut la surfatscha eis ei rodund 2 1000 grads cauld. Caliras che nus savein gnanc metter avon e caliras che damognan perfin da far luar crap, aschia dat ei magma.
+    Hyp 3: I pervezekwe, shtuen ze fajn vjadi de rodon 80 t'akke 100 km zot la tiara. Shilonsh zot la surfatsha a izi rodon 2 mg kaul. Kalirës, kanusve njang meter avon, a kalirës ke dëmonjnën përfin de falua krap. A sëje, dati makme.
+    Lang 3: sq
+
+    Ref 4: E vus essas cordialmein envidai questa sera dallas 8 ed in quart ella Clavadeira a Riom. Persquitar la discussiun saveis era via Livestream sin nossa pagina d'internet ni sin h. b. b. t. v.
+    Hyp 4: Avete scordi, Alma? In vita è questa sera della zottia del quarto alla clavadera a Rium. Per seguire la discussione, vi vedrete via live stream nella nostra pagina di Internet, o su HBB TV.
+    Lang 4: it
+
+    Ref 5: Ina ga ad onn, duront las vacanzas da stad passentavel jeu duas ni treis jamnas els vitgs tier mias tattas. Leu deva ei era in bus che cursava denter ils vitgs. La glieud el bus dumandava mei savens tier tgi ch’jeu mondi, da tgi ch'jeu seigi. Mias tattas stevan ell'Ucraina, jeu en Russia. La glieud el bus dumandava per ucranes, jeu rispundevel per russ. Nus capevan in l’auter.
+    Hyp 5: In agadon, duront las vakantas daštat, pasantaval jau duos ne treis jamnas elsvičs termia status. Leo deva eirein bus, ke kurzava dėntrėl svičs. La jėut el bus dumandavo meis savens, čia kė jau mondi, da čia kė jau saidi. Mia status števenel Ukraina, jau en Rusija. La jėut el bus dumandavo per Ukranės, jau reišpundeval per Rus. Nuskapevinin lauter.
+    Lang 5: lt
+
+
+VALIDATED Split:
+  Utterances: 93
+  WER: 1.0050
+  CER: 0.6449
+
+  Language Distribution:
+    de: 41
+    sl: 27
+    nl: 6
+    it: 4
+    la: 3
+    oc: 3
+    yi: 2
+    fr: 2
+    sq: 2
+    en: 2
+    he: 1
+
+  Example transcriptions:
+    Ref 1: Oz bien 10 dis avon las votaziuns federalas, schessan ils svizzers NA all'iniziativa 1 a 12, che vul frenar las pagas grondas dils managers. Quei muossa la nova retscherca ch'igl institut g. f. s. a Berna ha fatg sin incumbensa dalla s. r. g. s. s. r. En cumparegl cun la davosa retscherca ei il sustegn per quell'iniziativa sesminuius massivamein. Denton era pils dus auters proiects da votaziun vegn ei stretg.
+    Hyp 1: Heute werden die Städte von den Votationsfederalen die Schweizer nach einer inadodischen Initiative wie den Fremdkommissionen des Managers gestartet. Die Rente Nova muss die GFS Berna-Institut für die Inkumbenz der SGSSR suchen. Sie wird mit der Dauwose-Recherung den Zustand für die Initiative schmieren. Dann kommen die Autos von Votationsprojekten zu Ende.
+    Lang 1: de
+
+    Ref 2: Jeu vesel che quei fuss ina caussafetg impurtonta da subvenziunar aschi in project,surtut cunquei ch'ins vesa il successcun las cauras ed era sch'ei va en inasurfatscha pli gronda davischnaunca.
+    Hyp 2: Jeva, cel kakve foste na kao se fiti importante, da subvencionaše in projekt. So visok, kako je kansvetca ili sukces, kula skauras, a de je šiva ena surfača pigronda da višnevnke.
+    Lang 2: sl
+
+    Ref 3: Dapi bunamein 70 onns rimna la Cadeina da fortuna daners. En tut varga 1 comma 5 milliardas francs. E dapi oz ha quella Cadeina da fortuna ina nova presidenta dil cussegl da fundaziun. Ladina Heimgartner, la directura dad r. t. r. . Cunquei che la Cadeina da fortuna ei la fundaziun humanitara dalla s. r. g. s. s. r. eis ei usit ch'ina persuna da cader surpren quei presidi. Paula Nay.
+    Hyp 3: Seit 1971 riecht die Kadeuine der Fortuna den Ness. In total sind es 1,5 Milliarden Fr. Und die Piazza hat die Kadeuine der Fortuna in den neuen Präsidenten des Kusselles der Fondation, Dina Heimgartner, die Direktorin der RTR. Die Kadeuine der Fortuna und die humanitäre Fondation der SGS-SR sind die, die die Kader-Persönlichkeiten mit den Präsidien verbreiten.
+    Lang 3: de
+
+    Ref 4: Ils cuosts ein circa denter 5 100 e 7 100 1000 francs ch'ei cuosta da tener aviert ei. Aber quei ch'ins astga buca emblidar ei sch'il pass fuss buca aviarts sche la primavera sto il cantun gie tuttina far ora la neiv e schubergiar tut also gliez cuosta era.
+    Hyp 4: A skaj bili se v话ah dai 조ń 시arm NeverthelessKI기는所
+    Lang 4: sl
+
+    Ref 5: Da tgei ha il mund memia bia?
+    Hyp 5: Da čaj ail murn menja bja.
+    Lang 5: sl
+
+
+TEST Split:
+  Utterances: 94
+  WER: 0.9815
+  CER: 0.6046
+
+  Language Distribution:
+    de: 33
+    sl: 22
+    oc: 9
+    it: 6
+    la: 5
+    sq: 3
+    nl: 3
+    cy: 3
+    yi: 3
+    br: 1
+    hu: 1
+    en: 1
+    pt: 1
+    he: 1
+    lt: 1
+    fr: 1
+
+  Example transcriptions:
+    Ref 1: lgl agid svizzer per la muntogna sustegn ils purs grischuns. A Tartar sin la Muntogna han responsabels digl agid da muntogna surdau oz in schec da 3 100 1000 francs pils purs ch'han stuiu cumprar pavel muort la schitgira digl onn vargau. lls daners dueien vegnir reparti tochen la fin da matg, dabien enzatgei han mo purs ch'han piars silmeins 30 prozent da lur racolta. L'uniun purila grischuna schazegia ils dons totals sin 10 milliuns francs.
+    Hyp 1: Die Jägide Schweizer Perla Montagne susteign il Spurs Grisuns. Tartar sind le Montagne an responsables de jägide Montagne sur d'Ao zinschekte 3.000 Fr. spils Spurs kann stu kumpra Pavel murt l'aschitier de Jom Vergaum. Is denes do en vignire partit token la fin de match. De bienen tsechai an mo Purs can piach sil mains 30% de l'urre colta. L'unin Puri le Grisuns shatsädils dons total sin 10.000.000 Fr.
+    Lang 1: de
+
+    Ref 2: II possessur dalla Casa Demont a Vella sto pagar il castitg maximal per haver spazzau illegalmein quella casa. 30 1000 francs cuosta ei ad el d'haver destruiu la casa da valeta historica e culturala malgrad che la damonda era vegnida renviada. L'interpresa ch'ha spazzau la casa sto pagar 2 1000 francs.
+    Hyp 2: Il posesurda la casa de Mont avela što paga il kastič maksimal per ve špacau ilegalna in koja la casa. 30 MF kusti je del, da ve distrujiv la casa de valeta istorica in kulturala, mal grad ka la de Mont era venida rambjada. L'interpreza ka špacau la casa što paga 2 MF.
+    Lang 2: sl
+
+    Ref 3: In incendi sil plazzal dalla NEAT a Sedrun ha caschunau donns da varga in milliunfrancs. La tschenta che transportescha il material ord il tunnel ella val Bugnei hapigliau fiug, perquei che lavurs da reparar quella han caschunau sbrenzlas, scriva lapolizia cantunala. lgl incendi impedeschi denton buca las lavurs sil plazzal da baghegiar.
+    Hyp 3: In incendi si le placal delaneja de Sedruna kažunao dons de Varga in milijun francs. Lčente, ki transporteš il materialor del tunel eleval bunjaj, apjao fiuk, per koj ka lavurs de repara kojelan kažunao z Brenzlas, škriva la policija kantunala. Incendi impedeši dentom bolas lavurs il placal de Begedja.
+    Lang 3: sl
+
+    Ref 4: Okay, da Beethoven fagein nus ussa il pas vi tier Baila Morena, tiu proxim giavisch Zucchero. Era in che stat per bia energia per tei.
+    Hyp 4: Okay, der Beethoven, wenn er noch etwas weiterbeißen soll, Morena, die Praxis im Gewicht. Zucchero, E, I, M, K, Städte, Parbien, Energie, Partei.
+    Lang 4: de
+
+    Ref 5: El viva ussa propi siu siemi, metta sin quella carta. Velo e Armin, cheu co stat ei leu, co ei quei quel capetel ius vinavon?
+    Hyp 5: E 저희가 co Stewart, anche Hilary Come Why [" take the shape you prefer palm llaved down"] .
+    Lang 5: it
+
