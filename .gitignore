@@ -6,3 +6,6 @@ romansh-data/
 
 # pycache
 __pycache__/
+
+# checkpoints
+whisper-medium-rm-finetuned/
