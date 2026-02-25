@@ -1,5 +1,29 @@
 import subprocess
-import random
+import soundfile as sf
+
+def get_idiom_name_by_folder(folder_name):
+  name = (folder_name.split("-")[0])[2:]
+  match name:
+    case "sursilv":
+      return "Sursilvan"
+    case "surmiran":
+      return "Surmiran"
+    case "sutsilv":
+      return "Sutsilvan"
+    case "puter":
+      return "Puter"
+    case "vallader":
+      return "Vallader"
+    case _:
+      return "RG"
+
+def get_audio_duration(path):
+    try:
+        with sf.SoundFile(path) as f:
+            return len(f) / f.samplerate
+    except Exception as e:
+        print(f"Could not read {path}: {e}")
+        return 0.0
 
 def get_best_gpu():
     try:

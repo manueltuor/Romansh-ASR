@@ -3,3 +3,6 @@
 
 # Data folder
 romansh-data/
+
+# pycache
+__pycache__/
