@@ -4,10 +4,12 @@ This project is part of my bachelors thesis at the department of computer lingui
 
 ### Start
 
-First you need to activate the python virtual environment via this command in the terminal.
+First you need to create and activate the python virtual environment, as well as install the requirements via these commands in the terminal.
 
 ```bash
+python3 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 Before running code, the best available GPU should be selected by running the below bash script for optimal use of resources.
