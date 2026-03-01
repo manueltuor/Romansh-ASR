@@ -8,4 +8,4 @@ romansh-data/
 __pycache__/
 
 # checkpoints
-whisper-medium-rm-finetuned/
+whisper-medium-rm*/

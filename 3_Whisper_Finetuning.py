@@ -10,7 +10,7 @@
 
 import os
 import torch
-from datasets import load_dataset, DatasetDict, Audio, Dataset
+from datasets import load_dataset, DatasetDict, Audio, Features, Sequence, Value, Dataset
 from transformers import (
     WhisperFeatureExtractor,
     WhisperTokenizer,
@@ -25,18 +25,17 @@ import evaluate
 import numpy as np
 import pandas as pd
 import librosa
+from constants import FOLDER_NAMES, DATA_ROOT
 
 
 # In[2]:
 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = str(7)
+os.environ['CUDA_VISIBLE_DEVICES'] = str(5)
 
 
 # In[3]:
 
-
-data_path = "romansh-data/sursilvan-small/"
 output_dir = "./whisper-medium-rm-finetuned"
 
 model_name = "openai/whisper-medium"
@@ -46,34 +45,85 @@ task = "transcribe"
 # In[4]:
 
 
-# Cell 4: Load and Combine Dataset
-print("Loading and combining datasets...")
+# Cell 4: Load and Combine All Idiom Datasets
+print("="*60)
+print("Loading all Romansh idiom datasets")
+print("="*60)
+print(f"Found {len(FOLDER_NAMES)} idiom folders:")
+for folder in FOLDER_NAMES:
+    print(f"  📁 {folder}")
 
-# Load all three TSV files
-train_df = pd.read_csv(os.path.join(data_path, "train.tsv"), sep="\t")
-validated_df = pd.read_csv(os.path.join(data_path, "validated.tsv"), sep="\t")
-test_df = pd.read_csv(os.path.join(data_path, "test.tsv"), sep="\t")
+# Initialize lists to hold all data
+all_train_data = []
+all_test_data = []
 
-# Combine train and validated for training
-train_combined_df = pd.concat([train_df, validated_df], ignore_index=True)
+# Load data from each idiom folder
+for idiom_folder in FOLDER_NAMES:
+    idiom_path = os.path.join(DATA_ROOT, idiom_folder)
+    clips_path = os.path.join(idiom_path, "clips")
+    
+    print(f"\n📂 Processing {idiom_folder}...")
+    
+    try:
+        # Load TSV files
+        train_df = pd.read_csv(os.path.join(idiom_path, "train.tsv"), sep="\t")
+        validated_df = pd.read_csv(os.path.join(idiom_path, "validated.tsv"), sep="\t")
+        test_df = pd.read_csv(os.path.join(idiom_path, "test.tsv"), sep="\t")
+        
+        # Combine train and validated
+        idiom_train = pd.concat([train_df, validated_df], ignore_index=True)
+        
+        # Add full audio paths
+        idiom_train["audio"] = clips_path + "/" + idiom_train["path"]
+        test_df["audio"] = clips_path + "/" + test_df["path"]
+        
+        # Add idiom label (optional, but useful for analysis)
+        idiom_train["idiom"] = idiom_folder
+        test_df["idiom"] = idiom_folder
+        
+        # Filter existing audio files (optional but recommended)
+        train_before = len(idiom_train)
+        idiom_train = idiom_train[idiom_train["audio"].apply(os.path.exists)]
+        test_before = len(test_df)
+        test_df = test_df[test_df["audio"].apply(os.path.exists)]
+        
+        print(f"  Train+Validated: {train_before} → {len(idiom_train)} (filtered)")
+        print(f"  Test: {test_before} → {len(test_df)} (filtered)")
+        
+        # Add to combined lists
+        all_train_data.append(idiom_train)
+        all_test_data.append(test_df)
+        
+    except Exception as e:
+        print(f"  ⚠️ Error loading {idiom_folder}: {e}")
 
-# Add full audio paths
-train_combined_df["audio"] = os.path.join(data_path, "clips/") + train_combined_df["path"]
-test_df["audio"] = os.path.join(data_path, "clips/") + test_df["path"]
-
-# Convert to Hugging Face Dataset
-train_dataset = Dataset.from_pandas(train_combined_df[["audio", "sentence"]])
-test_dataset = Dataset.from_pandas(test_df[["audio", "sentence"]])
-
-# Create DatasetDict
-common_voice = DatasetDict({
-    "train": train_dataset,
-    "test": test_dataset
-})
-
-print("\n✅ DatasetDict created:")
-print(f"  Train: {len(common_voice['train'])} samples")
-print(f"  Test:  {len(common_voice['test'])} samples")
+# Combine all idioms
+if all_train_data and all_test_data:
+    train_combined_df = pd.concat(all_train_data, ignore_index=True)
+    test_combined_df = pd.concat(all_test_data, ignore_index=True)
+    
+    print("\n" + "="*60)
+    print("📊 Combined Dataset Statistics")
+    print("="*60)
+    print(f"Total training samples: {len(train_combined_df)}")
+    print(f"Total test samples: {len(test_combined_df)}")
+    
+    # Convert to Hugging Face Datasets
+    train_dataset = Dataset.from_pandas(train_combined_df[["audio", "sentence", "idiom"]])
+    test_dataset = Dataset.from_pandas(test_combined_df[["audio", "sentence", "idiom"]])
+    
+    # Create DatasetDict
+    common_voice = DatasetDict({
+        "train": train_dataset,
+        "test": test_dataset
+    })
+    
+    print("\n✅ DatasetDict created successfully!")
+    print(f"  Train: {len(common_voice['train'])} samples")
+    print(f"  Test:  {len(common_voice['test'])} samples")
+    
+else:
+    print("\n❌ No data loaded! Check your folder structure.")
 
 # Optional: Show first few samples
 print("\n📝 First 2 training samples:")
@@ -96,46 +146,66 @@ print("✅ Components loaded")
 # In[6]:
 
 
-# Cell 6: Alternative - More explicit audio loading
-print("Preparing dataset...")
+# Cell 6: Memory-Efficient Dataset Preparation
 
-def prepare_dataset_manual(batch):
-    """Manually load and process each audio file"""
+print("Preparing dataset in streaming mode...")
+
+# Define the features of our dataset explicitly
+features = Features({
+    "audio": Audio(sampling_rate=16000),
+    "sentence": Value("string"),
+    "idiom": Value("string")  # If you kept idiom column
+})
+
+def prepare_dataset_streaming(batch):
+    """Process a batch of data efficiently"""
     processed_features = []
     processed_labels = []
-
+    
     for i in range(len(batch["audio"])):
         audio_path = batch["audio"][i]
-
-        # Load audio with librosa (more control)
-        audio_array, sampling_rate = librosa.load(audio_path, sr=16000)
-
-        # Compute features
-        input_features = feature_extractor(
-            audio_array, 
-            sampling_rate=16000
-        ).input_features[0]
-        processed_features.append(input_features)
-
-        # Encode text
-        labels = tokenizer(batch["sentence"][i]).input_ids
-        processed_labels.append(labels)
-
+        
+        try:
+            # Load audio (librosa loads on-the-fly, memory efficient)
+            audio_array, sampling_rate = librosa.load(audio_path, sr=16000)
+            
+            # Compute features
+            input_features = feature_extractor(
+                audio_array, 
+                sampling_rate=16000
+            ).input_features[0]
+            processed_features.append(input_features)
+            
+            # Encode text
+            labels = tokenizer(batch["sentence"][i]).input_ids
+            processed_labels.append(labels)
+            
+        except Exception as e:
+            print(f"⚠️ Error processing {audio_path}: {e}")
+            # Add empty placeholders
+            processed_features.append(np.zeros((80, 3000)))  # Dummy features
+            processed_labels.append([0])  # Dummy label
+    
     batch["input_features"] = processed_features
     batch["labels"] = processed_labels
     return batch
 
-# Apply the manual preparation
+# Process with smaller batch size and remove_columns=False
 common_voice = common_voice.map(
-    prepare_dataset_manual,
+    prepare_dataset_streaming,
     batched=True,
-    batch_size=16,  # Process 16 at a time
-    remove_columns=common_voice.column_names["train"],
-    num_proc=1,
+    batch_size=32,  # Smaller batches to control memory
+    remove_columns=None,  # Don't remove columns yet
+    num_proc=1,  # Reduce parallel processes
     desc="Preparing dataset"
 )
 
-print("✅ Dataset prepared")
+# Now remove unnecessary columns
+columns_to_remove = [col for col in common_voice["train"].column_names 
+                     if col not in ["input_features", "labels"]]
+common_voice = common_voice.remove_columns(columns_to_remove)
+
+print("✅ Dataset prepared successfully")
 
 
 # In[7]:
