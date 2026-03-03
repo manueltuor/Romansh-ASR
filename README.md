@@ -1,8 +1,8 @@
-## Automated Speech Recognition for Romansh
+# Automated Speech Recognition for Romansh
 
 This project is part of my bachelors thesis at the department of computer linguistics. The goal is to create automated speech recognition for romansh the 4th official swiss national language.
 
-### Start
+## Start
 
 First you need to create and activate the python virtual environment, as well as install the requirements via these commands in the terminal.
 
@@ -12,8 +12,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Before running code, the best available GPU should be selected by running the below bash script for optimal use of resources.
+## Data
 
-```bash
-source set_gpu.sh
-```
+The data can be obtained via the [RTR Linguistic API](https://developer.srgssr.ch/en/apis/rtr-linguistic). It should be saved in a directory named `romansh-data` at root level.
+
+## Training
+
+Once your environment is set up and you have the data, you can run the Jupyter Notebooks in order.

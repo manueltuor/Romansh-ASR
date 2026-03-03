@@ -43,10 +43,10 @@ def get_best_gpu():
         best_gpus = [idx for idx, free in gpus if free == max_free]
         selected = best_gpus[len(best_gpus)-1]
         
-        print(f"📊 Selected GPU {selected} with {max_free} MiB free memory")
+        print(f"Selected GPU {selected} with {max_free} MiB free memory")
         return selected
         
     except Exception as e:
-        print(f"⚠️ Error detecting best GPU: {e}")
-        print("   Defaulting to GPU 0")
+        print(f"Error detecting best GPU: {e}")
+        print("Defaulting to GPU 0")
         return 0
