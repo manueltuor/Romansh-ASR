@@ -3,14 +3,14 @@
 
 # ## 3 Whisper Finetuning
 # 
-# Now the fun part finally starts. This notebook will finetune the whisper model on romansh to improve transcription performance.
+# This notebook finetunes Whisper on all Romansh idioms with all the training data.
 
 # In[1]:
 
 
 import os
 import torch
-from datasets import load_dataset, DatasetDict, Audio, Features, Sequence, Value, Dataset
+from datasets import DatasetDict, Dataset
 from transformers import (
     WhisperFeatureExtractor,
     WhisperTokenizer,
@@ -19,25 +19,17 @@ from transformers import (
     Seq2SeqTrainingArguments,
     Seq2SeqTrainer
 )
-from dataclasses import dataclass
-from typing import Any, Dict, List, Union
 import evaluate
 import numpy as np
 import pandas as pd
 import librosa
 from constants import FOLDER_NAMES, DATA_ROOT
-
-
-# In[2]:
-
-
-os.environ['CUDA_VISIBLE_DEVICES'] = str(5)
-
+from helpers import get_idiom_name_by_folder, get_best_gpu
 
 # In[3]:
 
-output_dir = "./whisper-medium-rm-finetuned"
-
+DEVICE = torch.device(f"cuda:{get_best_gpu()}" if torch.cuda.is_available() else "cpu")
+output_dir = "./whisper-medium-rm-all"
 model_name = "openai/whisper-medium"
 task = "transcribe"
 
@@ -53,82 +45,87 @@ print(f"Found {len(FOLDER_NAMES)} idiom folders:")
 for folder in FOLDER_NAMES:
     print(f"  📁 {folder}")
 
-# Initialize lists to hold all data
-all_train_data = []
-all_test_data = []
+# Initialize lists to hold all data as dictionaries (not DataFrames)
+all_train_samples = []
+all_validation_samples = []
 
 # Load data from each idiom folder
 for idiom_folder in FOLDER_NAMES:
     idiom_path = os.path.join(DATA_ROOT, idiom_folder)
     clips_path = os.path.join(idiom_path, "clips")
+    idiom_name = get_idiom_name_by_folder(idiom_folder)
     
     print(f"\n📂 Processing {idiom_folder}...")
     
     try:
         # Load TSV files
         train_df = pd.read_csv(os.path.join(idiom_path, "train.tsv"), sep="\t")
-        validated_df = pd.read_csv(os.path.join(idiom_path, "validated.tsv"), sep="\t")
-        test_df = pd.read_csv(os.path.join(idiom_path, "test.tsv"), sep="\t")
+        validation_df = pd.read_csv(os.path.join(idiom_path, "validation.tsv"), sep="\t")
         
-        # Combine train and validated
-        idiom_train = pd.concat([train_df, validated_df], ignore_index=True)
+        # Convert to dictionaries (simpler for Dataset.from_list)
+        for _, row in train_df.iterrows():
+            audio_path = os.path.join(clips_path, row["path"])
+            if os.path.exists(audio_path):
+                all_train_samples.append({
+                    "audio": audio_path,
+                    "sentence": str(row["sentence"]),
+                    "idiom": idiom_name
+                })
         
-        # Add full audio paths
-        idiom_train["audio"] = clips_path + "/" + idiom_train["path"]
-        test_df["audio"] = clips_path + "/" + test_df["path"]
+        for _, row in validation_df.iterrows():
+            audio_path = os.path.join(clips_path, row["path"])
+            if os.path.exists(audio_path):
+                all_validation_samples.append({
+                    "audio": audio_path,
+                    "sentence": str(row["sentence"]),
+                    "idiom": idiom_name
+                })
         
-        # Add idiom label (optional, but useful for analysis)
-        idiom_train["idiom"] = idiom_folder
-        test_df["idiom"] = idiom_folder
-        
-        # Filter existing audio files (optional but recommended)
-        train_before = len(idiom_train)
-        idiom_train = idiom_train[idiom_train["audio"].apply(os.path.exists)]
-        test_before = len(test_df)
-        test_df = test_df[test_df["audio"].apply(os.path.exists)]
-        
-        print(f"  Train+Validated: {train_before} → {len(idiom_train)} (filtered)")
-        print(f"  Test: {test_before} → {len(test_df)} (filtered)")
-        
-        # Add to combined lists
-        all_train_data.append(idiom_train)
-        all_test_data.append(test_df)
+        print(f"  Train: {len(train_df)} total, {len([s for s in all_train_samples if s['idiom']==idiom_name])} with audio")
+        print(f"  Validation: {len(validation_df)} total, {len([s for s in all_validation_samples if s['idiom']==idiom_name])} with audio")
         
     except Exception as e:
         print(f"  ⚠️ Error loading {idiom_folder}: {e}")
 
-# Combine all idioms
-if all_train_data and all_test_data:
-    train_combined_df = pd.concat(all_train_data, ignore_index=True)
-    test_combined_df = pd.concat(all_test_data, ignore_index=True)
-    
-    print("\n" + "="*60)
-    print("📊 Combined Dataset Statistics")
-    print("="*60)
-    print(f"Total training samples: {len(train_combined_df)}")
-    print(f"Total test samples: {len(test_combined_df)}")
-    
-    # Convert to Hugging Face Datasets
-    train_dataset = Dataset.from_pandas(train_combined_df[["audio", "sentence", "idiom"]])
-    test_dataset = Dataset.from_pandas(test_combined_df[["audio", "sentence", "idiom"]])
+# Create datasets directly from dictionaries
+print("\n" + "="*60)
+print("📊 Combined Dataset Statistics")
+print("="*60)
+
+if all_train_samples and all_validation_samples:
+    # Create datasets from list of dictionaries
+    train_dataset = Dataset.from_list(all_train_samples)
+    validation_dataset = Dataset.from_list(all_validation_samples)
     
     # Create DatasetDict
     common_voice = DatasetDict({
         "train": train_dataset,
-        "test": test_dataset
+        "validation": validation_dataset
     })
     
-    print("\n✅ DatasetDict created successfully!")
+    print(f"Total training samples: {len(train_dataset)}")
+    print(f"Total validation samples: {len(validation_dataset)}")
+    
+    # Show distribution by idiom
+    print("\n📈 Training distribution by idiom:")
+    train_idioms = {}
+    for item in all_train_samples:
+        train_idioms[item["idiom"]] = train_idioms.get(item["idiom"], 0) + 1
+    for idiom, count in train_idioms.items():
+        print(f"  {idiom}: {count} samples ({count/len(train_dataset)*100:.1f}%)")
+    
+    print("\n✅ Raw DatasetDict created successfully!")
     print(f"  Train: {len(common_voice['train'])} samples")
-    print(f"  Test:  {len(common_voice['test'])} samples")
+    print(f"  Validation:  {len(common_voice['validation'])} samples")
     
 else:
     print("\n❌ No data loaded! Check your folder structure.")
+    raise ValueError("No data loaded")
 
 # Optional: Show first few samples
 print("\n📝 First 2 training samples:")
-for i in range(min(2, len(train_combined_df))):
-    print(f"  {i+1}. {train_combined_df['sentence'].iloc[i][:100]}...")
+for i in range(min(2, len(train_dataset))):
+    print(f"  {i+1}. {train_dataset[i]['sentence'][:100]}...")
 
 
 # In[5]:
@@ -140,103 +137,109 @@ feature_extractor = WhisperFeatureExtractor.from_pretrained(model_name)
 tokenizer = WhisperTokenizer.from_pretrained(model_name, task=task)
 processor = WhisperProcessor.from_pretrained(model_name, task=task)
 
+# Disable tokenizer parallelism to avoid warnings
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 print("✅ Components loaded")
-
-
-# In[6]:
-
-
-# Cell 6: Memory-Efficient Dataset Preparation
-
-print("Preparing dataset in streaming mode...")
-
-# Define the features of our dataset explicitly
-features = Features({
-    "audio": Audio(sampling_rate=16000),
-    "sentence": Value("string"),
-    "idiom": Value("string")  # If you kept idiom column
-})
-
-def prepare_dataset_streaming(batch):
-    """Process a batch of data efficiently"""
-    processed_features = []
-    processed_labels = []
-    
-    for i in range(len(batch["audio"])):
-        audio_path = batch["audio"][i]
-        
-        try:
-            # Load audio (librosa loads on-the-fly, memory efficient)
-            audio_array, sampling_rate = librosa.load(audio_path, sr=16000)
-            
-            # Compute features
-            input_features = feature_extractor(
-                audio_array, 
-                sampling_rate=16000
-            ).input_features[0]
-            processed_features.append(input_features)
-            
-            # Encode text
-            labels = tokenizer(batch["sentence"][i]).input_ids
-            processed_labels.append(labels)
-            
-        except Exception as e:
-            print(f"⚠️ Error processing {audio_path}: {e}")
-            # Add empty placeholders
-            processed_features.append(np.zeros((80, 3000)))  # Dummy features
-            processed_labels.append([0])  # Dummy label
-    
-    batch["input_features"] = processed_features
-    batch["labels"] = processed_labels
-    return batch
-
-# Process with smaller batch size and remove_columns=False
-common_voice = common_voice.map(
-    prepare_dataset_streaming,
-    batched=True,
-    batch_size=32,  # Smaller batches to control memory
-    remove_columns=None,  # Don't remove columns yet
-    num_proc=1,  # Reduce parallel processes
-    desc="Preparing dataset"
-)
-
-# Now remove unnecessary columns
-columns_to_remove = [col for col in common_voice["train"].column_names 
-                     if col not in ["input_features", "labels"]]
-common_voice = common_voice.remove_columns(columns_to_remove)
-
-print("✅ Dataset prepared successfully")
-
 
 # In[7]:
 
 
-# Cell 7: Data Collator
-@dataclass
-class DataCollatorSpeechSeq2SeqWithPadding:
-    processor: Any
+# Cell 7: Create On-the-Fly Dataset Class
+class WhisperOnTheFlyDataset(torch.utils.data.Dataset):
+    """Dataset that processes audio on-the-fly during training"""
+    
+    def __init__(self, hf_dataset, feature_extractor, tokenizer):
+        self.dataset = hf_dataset
+        self.feature_extractor = feature_extractor
+        self.tokenizer = tokenizer
+    
+    def __len__(self):
+        return len(self.dataset)
+    
+    def __getitem__(self, idx):
+        item = self.dataset[idx]
+        
+        audio_path = item["audio"]
+        audio_array, sr = librosa.load(audio_path, sr=16000)
+        
+        input_features = self.feature_extractor(
+            audio_array,
+            sampling_rate=16000
+        ).input_features[0]
+        
+        # Add truncation here!
+        labels = self.tokenizer(
+            item["sentence"],
+            truncation=True,
+            max_length=448  # Explicitly set max length
+        ).input_ids
+        
+        return {
+            "input_features": input_features,
+            "labels": labels
+        }
 
-    def __call__(self, features: List[Dict[str, Union[List[int], torch.Tensor]]]) -> Dict[str, torch.Tensor]:
-        # Split inputs and labels
-        input_features = [{"input_features": feature["input_features"]} for feature in features]
-        batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
-
-        label_features = [{"input_ids": feature["labels"]} for feature in features]
-        labels_batch = self.processor.tokenizer.pad(label_features, return_tensors="pt")
-
-        # Replace padding with -100 to ignore loss
-        labels = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
-
-        batch["labels"] = labels
-        return batch
-
-data_collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor)
+# Create on-the-fly datasets
+print("Creating on-the-fly datasets...")
+train_dataset = WhisperOnTheFlyDataset(
+    common_voice["train"], 
+    feature_extractor, 
+    tokenizer
+)
+eval_dataset = WhisperOnTheFlyDataset(
+    common_voice["validation"], 
+    feature_extractor, 
+    tokenizer
+)
+print(f"✅ Created train dataset with {len(train_dataset)} samples")
+print(f"✅ Created eval dataset with {len(eval_dataset)} samples")
 
 
 # In[8]:
 
 
-# Cell 8: Evaluation Metric
+# Cell 8: Custom Collate Function for Variable-Length Sequences
+def collate_fn(batch):
+    """Custom collate function to handle variable-length sequences"""
+    
+    # Pad input features (shape: [80, variable_len])
+    input_features = [item["input_features"] for item in batch]
+    max_feat_len = max(f.shape[-1] for f in input_features)
+    
+    padded_features = []
+    for f in input_features:
+        pad_len = max_feat_len - f.shape[-1]
+        if pad_len > 0:
+            # Pad along time dimension
+            padding = np.zeros((f.shape[0], pad_len))
+            padded = np.concatenate([f, padding], axis=-1)
+        else:
+            padded = f
+        padded_features.append(padded)
+    
+    # Pad labels
+    labels = [item["labels"] for item in batch]
+    max_label_len = max(len(l) for l in labels)
+    
+    padded_labels = []
+    for l in labels:
+        pad_len = max_label_len - len(l)
+        padded = l + [-100] * pad_len  # -100 is ignored in loss
+        padded_labels.append(padded)
+    
+    return {
+        "input_features": torch.tensor(np.array(padded_features), dtype=torch.float32),
+        "labels": torch.tensor(np.array(padded_labels), dtype=torch.long)
+    }
+
+print("✅ Collate function defined")
+
+
+# In[9]:
+
+
+# Cell 9: Evaluation Metric
 wer_metric = evaluate.load("wer")
 
 def compute_metrics(pred):
@@ -253,98 +256,126 @@ def compute_metrics(pred):
     return {"wer": wer}
 
 
-# In[9]:
+# In[10]:
 
 
-# Cell 9: Load Model
+# Cell 10: Load Model
 print(f"Loading Whisper model: {model_name}...")
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device)
+model = WhisperForConditionalGeneration.from_pretrained(model_name).to(DEVICE)
 
 # Disable cache during training
 model.config.use_cache = False
 
-# For Romansh, set forced decoder ids for the task
-# IMPORTANT: Do NOT modify model.config.suppress_tokens directly!
-if hasattr(processor, "get_decoder_prompt_ids"):
-    model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(task=task)
-
-# Remove this line completely:
-# model.config.suppress_tokens = []   ← DELETE THIS LINE
-
 print(f"✅ Model loaded ({sum(p.numel() for p in model.parameters())/1e6:.1f}M parameters)")
-
-# In[10]:
-
-
-# Cell 10: Training Arguments
-training_args = Seq2SeqTrainingArguments(
-    output_dir=output_dir,
-    per_device_train_batch_size=16,
-    gradient_accumulation_steps=1,
-    learning_rate=1e-5,
-    warmup_steps=500,
-    max_steps=4000,
-    gradient_checkpointing=True,
-    fp16=True,
-    eval_strategy="steps",
-    per_device_eval_batch_size=8,
-    predict_with_generate=True,
-    generation_max_length=225,
-    save_steps=1000,
-    eval_steps=1000,
-    logging_steps=25,
-    report_to=["tensorboard"],
-    load_best_model_at_end=True,
-    metric_for_best_model="wer",
-    greater_is_better=False,
-    push_to_hub=False,
-)
-
-print("Training arguments:")
-print(f"  Batch size: {training_args.per_device_train_batch_size}")
-print(f"  Learning rate: {training_args.learning_rate}")
-print(f"  Max steps: {training_args.max_steps}")
-print(f"  FP16: {training_args.fp16}")
+if DEVICE == "cuda":
+    print(f"  GPU: {torch.cuda.get_device_name(0)}")
 
 
 # In[11]:
 
 
-# Cell 11: Initialize Trainer
+# Cell 11: Training Arguments (Memory-Optimized)
+training_args = Seq2SeqTrainingArguments(
+    output_dir=output_dir,
+    per_device_train_batch_size=8,  # Reduced for memory
+    gradient_accumulation_steps=2,   # Effective batch size = 16
+    learning_rate=1e-5,
+    warmup_steps=1000,
+    max_steps=10000,  # More steps for larger dataset
+    gradient_checkpointing=True,      # Critical for memory
+    fp16=True,                        # Mixed precision
+    eval_strategy="steps",
+    per_device_eval_batch_size=8,     # Smaller eval batches
+    predict_with_generate=True,
+    generation_max_length=225,
+    save_steps=1000,
+    eval_steps=1000,
+    logging_steps=100,
+    report_to=["tensorboard"],
+    load_best_model_at_end=True,
+    metric_for_best_model="wer",
+    greater_is_better=False,
+    push_to_hub=False,
+    dataloader_num_workers=0,          # No multiprocessing to avoid issues
+    remove_unused_columns=False,        # Keep all columns
+    ddp_find_unused_parameters=None,
+)
+
+print("Training arguments:")
+print(f"  Batch size (per device): {training_args.per_device_train_batch_size}")
+print(f"  Gradient accumulation: {training_args.gradient_accumulation_steps}")
+print(f"  Effective batch size: {training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps}")
+print(f"  Learning rate: {training_args.learning_rate}")
+print(f"  Max steps: {training_args.max_steps}")
+print(f"  FP16: {training_args.fp16}")
+print(f"  Gradient checkpointing: {training_args.gradient_checkpointing}")
+
+
+# In[12]:
+
+
+# Cell 12: Initialize Trainer with Custom Datasets and Collate
 trainer = Seq2SeqTrainer(
     args=training_args,
     model=model,
-    train_dataset=common_voice["train"],
-    eval_dataset=common_voice["test"],
-    data_collator=data_collator,
+    train_dataset=train_dataset,
+    eval_dataset=eval_dataset,
+    data_collator=collate_fn,           # Use custom collate, not processor
     compute_metrics=compute_metrics,
 )
 
 print("✅ Trainer initialized")
 
 
-# In[ ]:
+# In[13]:
 
 
-# Cell 12: Train!
-print("="*60)
-print("Starting training...")
-print("="*60)
-
-trainer.train()
-
-print("="*60)
-print("✅ Training complete!")
+# Cell 13: Quick Test Before Full Training
+print("\n" + "="*60)
+print("🔍 Quick test on one batch")
 print("="*60)
 
+# Test one batch
+test_batch = next(iter(torch.utils.data.DataLoader(
+    train_dataset, 
+    batch_size=2, 
+    collate_fn=collate_fn
+)))
 
-# In[ ]:
+print(f"Input features shape: {test_batch['input_features'].shape}")
+print(f"Labels shape: {test_batch['labels'].shape}")
+print("✅ Batch test passed - ready for training!")
 
 
-# Cell 13: Save Model
-print(f"Saving model to {output_dir}...")
+# In[14]:
+
+
+# Cell 14: Train!
+print("\n" + "="*60)
+print("🚀 Starting training on all Romansh idioms")
+print("="*60)
+print(f"Total training samples: {len(train_dataset)}")
+print(f"Total validation samples: {len(eval_dataset)}")
+print(f"Training will run for {training_args.max_steps} steps")
+print("="*60 + "\n")
+
+try:
+    trainer.train()
+    print("\n" + "="*60)
+    print("✅ Training complete!")
+    print("="*60)
+except KeyboardInterrupt:
+    print("\n⚠️ Training interrupted by user")
+except Exception as e:
+    print(f"\n❌ Training error: {e}")
+    raise
+
+# In[15]:
+
+
+# Cell 15: Save Model
+print(f"\n💾 Saving model to {output_dir}...")
 
 trainer.save_model()
 tokenizer.save_pretrained(output_dir)
