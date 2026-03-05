@@ -6,6 +6,8 @@ romansh-data/
 
 # pycache
 __pycache__/
+*.pyc
+*.pyo
 
 # checkpoints
 whisper-medium-rm*/

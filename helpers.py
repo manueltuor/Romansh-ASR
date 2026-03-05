@@ -1,5 +1,8 @@
+import os
+import pandas as pd
 import subprocess
 import soundfile as sf
+from constants import SPLITS, FOLDER_NAMES, DATA_ROOT
 
 def get_idiom_name_by_folder(folder_name):
   name = (folder_name.split("-")[0])[2:]
@@ -50,3 +53,27 @@ def get_best_gpu():
         print(f"Error detecting best GPU: {e}")
         print("Defaulting to GPU 0")
         return 0
+  
+def load_all_data(split):
+
+  if split not in SPLITS:
+    raise Exception(f"Invalid split, must be one of: {SPLITS}")
+
+  df = pd.DataFrame()
+
+  for folder_name in FOLDER_NAMES:
+    idiom_path = os.path.join(DATA_ROOT, folder_name)
+    split_path = os.path.join(idiom_path, split + ".tsv")
+    clips_path = os.path.join(idiom_path, "clips")
+    idiom_name = get_idiom_name_by_folder(folder_name)
+
+    if not os.path.exists(split_path):
+      raise Exception(f"File {split_path} not found")
+    
+    df_idiom = pd.read_csv(split_path, sep='\t')
+    df_idiom['audio_path'] = df_idiom['path'].apply(lambda p: os.path.join(clips_path, p))
+    df_idiom['idiom'] = idiom_name
+    df = pd.concat([df, df_idiom[['audio_path', 'sentence', 'idiom']]], ignore_index=True)
+  
+  return df
+ 
