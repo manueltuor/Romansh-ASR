@@ -11,3 +11,9 @@ __pycache__/
 
 # checkpoints
 whisper-medium-rm*/
+
+# omnilingual
+omnilingual-*/
+dataset_*
+src/
+workflows/
