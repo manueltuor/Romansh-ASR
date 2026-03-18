@@ -13,7 +13,11 @@ __pycache__/
 whisper-medium-rm*/
 
 # omnilingual
+omnilingual-asr/
 omnilingual-*/
 dataset_*
 src/
 workflows/
+
+#classifier
+idiom_classifier/
