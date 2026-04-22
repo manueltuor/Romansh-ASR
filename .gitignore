@@ -1,6 +1,9 @@
 # Virtual Environment
 .venv/
 
+# vscode
+.vscode/
+
 # Data folder
 romansh-data/
 
@@ -14,7 +17,7 @@ whisper-medium-rm*/
 
 # omnilingual
 omnilingual-asr/
-omnilingual-*/
+omnilingual_romansh/
 dataset_*
 src/
 workflows/

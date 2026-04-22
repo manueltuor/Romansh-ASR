@@ -1,0 +1,14 @@
+torch>=2.0.0
+torchaudio>=2.0.0
+transformers>=4.36.0
+datasets[audio]>=2.14.0
+accelerate>=0.24.0
+evaluate>=0.4.0
+openai-whisper
+librosa
+jiwer
+pandas
+matplotlib
+tqdm
+ipykernel
+huggingface_hub
