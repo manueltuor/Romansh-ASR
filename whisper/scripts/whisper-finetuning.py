@@ -10,6 +10,13 @@
 
 import os
 import torch
+from pathlib import Path
+import sys
+
+notebook_dir = Path.cwd()
+whisper_dir = notebook_dir.parent
+sys.path.append(str(whisper_dir))
+
 from datasets import DatasetDict, Dataset
 from transformers import (
     WhisperFeatureExtractor,
@@ -23,13 +30,14 @@ import evaluate
 import numpy as np
 import pandas as pd
 import librosa
-from constants import FOLDER_NAMES, DATA_ROOT
-from helpers import get_idiom_name_by_folder, get_best_gpu
+from whisper_asr.constants import FOLDER_NAMES, DATA_ROOT
+from whisper_asr.utils import get_idiom_name_by_folder, get_best_gpu
 
 # In[3]:
 
-DEVICE = torch.device(f"cuda:{get_best_gpu()}" if torch.cuda.is_available() else "cpu")
-output_dir = "./whisper-medium-rm-all"
+DEVICE = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
+#DEVICE = torch.device(f"cuda:{get_best_gpu()}" if torch.cuda.is_available() else "cpu")
+output_dir = "../models/whisper-medium-rm-all-it"
 model_name = "openai/whisper-medium"
 task = "transcribe"
 
@@ -172,7 +180,9 @@ class WhisperOnTheFlyDataset(torch.utils.data.Dataset):
         labels = self.tokenizer(
             item["sentence"],
             truncation=True,
-            max_length=448  # Explicitly set max length
+            max_length=448,  # Explicitly set max length
+            language="it",
+            task="transcribe",
         ).input_ids
         
         return {
@@ -262,8 +272,14 @@ def compute_metrics(pred):
 # Cell 10: Load Model
 print(f"Loading Whisper model: {model_name}...")
 
-model = WhisperForConditionalGeneration.from_pretrained(model_name).to(DEVICE)
-
+model = WhisperForConditionalGeneration.from_pretrained(
+    model_name,
+    low_cpu_mem_usage=True
+).to(DEVICE)
+model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(
+    language="it", task="transcribe"
+)
+model.config.suppress_tokens = []       # allow all tokens
 # Disable cache during training
 model.config.use_cache = False
 
@@ -284,6 +300,7 @@ training_args = Seq2SeqTrainingArguments(
     warmup_steps=1000,
     max_steps=10000,  # More steps for larger dataset
     gradient_checkpointing=True,      # Critical for memory
+    optim="adamw_bnb_8bit",
     fp16=True,                        # Mixed precision
     eval_strategy="steps",
     per_device_eval_batch_size=8,     # Smaller eval batches

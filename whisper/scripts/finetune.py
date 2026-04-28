@@ -1,6 +1,6 @@
 # Cell 1: Imports & Setup
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 import sys
 from pathlib import Path
 import torch

@@ -22,5 +22,8 @@ dataset_*
 src/
 workflows/
 
-#classifier
+# classifier
 idiom_classifier/
+
+# whisper
+whisper_asr.egg-info/
