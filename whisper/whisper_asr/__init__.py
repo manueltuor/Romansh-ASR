@@ -7,7 +7,7 @@ from .data import (
     load_all_data,
     load_idiom_data
 )
-from .analysis import plot_corpus_stats, plot_wer_comparison
+from .analysis import plot_corpus_stats, plot_wer_comparison, plot_wer_violin
 from .model import load_model_and_processor
 from .train import Trainer, TrainingConfig, get_training_args
 from .preprocessing import (
@@ -23,8 +23,12 @@ from .evaluate import (
     transcribe_whisper,
     compute_wer_summary,
     compute_wer,
-    compute_metrics
+    compute_metrics,
+    compute_idiom_results,    
+    print_evaluation_results,
+    compute_normalized_results
 )
+from .utils import normalize_romansh_text
 
 __all__ = [
     "RomanshDataset",
@@ -50,5 +54,10 @@ __all__ = [
     "TrainingConfig",
     "get_training_args",
     "compute_metrics",
-    "load_idiom_data"
+    "load_idiom_data",
+    "compute_idiom_results",
+    "print_evaluation_results",
+    "plot_wer_violin",
+    "compute_normalized_results",
+    "normalize_romansh_text"
 ]

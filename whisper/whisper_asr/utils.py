@@ -1,5 +1,7 @@
 import subprocess
 import soundfile as sf
+import unicodedata
+import re
 
 def get_best_gpu():
   try:
@@ -50,3 +52,20 @@ def get_audio_duration(path):
   except Exception as e:
     print(f"Could not read {path}: {e}")
     return 0.0
+  
+def normalize_romansh_text(text: str) -> str:
+    """Normalize text for Romansh ASR:
+    - Unicode NFD → remove combining characters → NFC
+    - Lowercase
+    - Remove punctuation (keep letters and whitespace)
+    - Collapse multiple spaces
+    """
+    if not isinstance(text, str):
+        return ""
+    text = unicodedata.normalize('NFD', text)
+    text = ''.join(c for c in text if not unicodedata.combining(c))
+    text = unicodedata.normalize('NFC', text)
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', '', text, flags=re.UNICODE)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
