@@ -29,6 +29,7 @@ from .evaluate import (
     compute_normalized_results
 )
 from .utils import normalize_romansh_text
+from .classification import extract_decoder_embeddings, train_classifier
 
 __all__ = [
     "RomanshDataset",
@@ -59,5 +60,7 @@ __all__ = [
     "print_evaluation_results",
     "plot_wer_violin",
     "compute_normalized_results",
-    "normalize_romansh_text"
+    "normalize_romansh_text",
+    "extract_decoder_embeddings",
+    "train_classifier"
 ]

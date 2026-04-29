@@ -23,7 +23,7 @@ src/
 workflows/
 
 # classifier
-idiom_classifier/
+idiom_classifier.pkl
 
 # whisper
 whisper_asr.egg-info/
