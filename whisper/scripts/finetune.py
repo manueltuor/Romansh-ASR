@@ -1,6 +1,5 @@
 # Cell 1: Imports & Setup
 import os
-#os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 import sys
 from pathlib import Path
 import torch
@@ -41,6 +40,7 @@ OUTPUT_DIR = "../models/whisper-medium-rm-all-it"
 model, feature_extractor, tokenizer, processor = load_model_and_processor(
     MODEL_NAME, DEVICE, language="it"
 )
+
 print(f"Model loaded: {sum(p.numel() for p in model.parameters())/1e6:.1f}M params")
 
 # Cell 4: Create On‑the‑Fly Datasets (pass the lists directly)

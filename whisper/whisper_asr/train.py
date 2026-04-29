@@ -143,7 +143,8 @@ def get_training_args(output_dir: str, **overrides) -> Seq2SeqTrainingArguments:
         dataloader_num_workers=0,
         remove_unused_columns=False,
         ddp_find_unused_parameters=None,
-        gradient_checkpointing=False
+        gradient_checkpointing=True,
+        optim="adamw_bnb_8bit"
     )
     defaults.update(overrides)
     return Seq2SeqTrainingArguments(**defaults)

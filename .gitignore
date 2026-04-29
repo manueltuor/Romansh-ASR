@@ -27,3 +27,4 @@ idiom_classifier/
 
 # whisper
 whisper_asr.egg-info/
+whisper_asr.*
