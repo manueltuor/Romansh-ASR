@@ -18,7 +18,7 @@ class TrainingConfig:
     logging_steps: int = 100
     eval_steps: int = 500
     save_steps: int = 1000
-    fp16: bool = False            # set True if using mixed precision (requires GPU)
+    fp16: bool = True            # set True if using mixed precision (requires GPU)
 
 class Trainer:
     def __init__(
@@ -143,8 +143,7 @@ def get_training_args(output_dir: str, **overrides) -> Seq2SeqTrainingArguments:
         dataloader_num_workers=0,
         remove_unused_columns=False,
         ddp_find_unused_parameters=None,
-        gradient_checkpointing=True,
-        optim="adamw_bnb_8bit"
+        gradient_checkpointing=True
     )
     defaults.update(overrides)
     return Seq2SeqTrainingArguments(**defaults)

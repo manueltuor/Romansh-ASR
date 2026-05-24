@@ -35,7 +35,7 @@ print(f"Train samples: {len(train_samples)}, Validation samples: {len(val_sample
 
 # Cell 3: Load Model & Processor (with Italian language fixed)
 MODEL_NAME = "openai/whisper-medium"
-OUTPUT_DIR = "../models/whisper-medium-rm-all-it"
+OUTPUT_DIR = "../models/whisper-medium-rm-all-it-2"
 
 model, feature_extractor, tokenizer, processor = load_model_and_processor(
     MODEL_NAME, DEVICE, language="it"
