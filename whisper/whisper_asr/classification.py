@@ -86,6 +86,44 @@ def extract_decoder_embeddings(
     return np.concatenate(embeddings, axis=0)
 
 
+def extract_encoder_embeddings(
+    model: WhisperForConditionalGeneration,
+    processor: WhisperProcessor,
+    audio_paths: List[str],
+    device: str = "cuda",
+    batch_size: int = 8,
+) -> np.ndarray:
+    """
+    Compute audio‑only embeddings by mean‑pooling the encoder’s last hidden state.
+    No text required.
+    Returns:
+        numpy array of shape (n_samples, d_model)
+    """
+    model.eval()
+    embeddings = []
+
+    for i in tqdm(range(0, len(audio_paths), batch_size), desc="Extracting encoder embeddings"):
+        batch_audio = audio_paths[i:i+batch_size]
+        # 1. Audio → mel features
+        input_features = processor(
+            [load_audio(p) for p in batch_audio],
+            sampling_rate=16000,
+            return_tensors="pt"
+        ).input_features.to(device)
+
+        # 2. Run encoder only
+        with torch.no_grad():
+            encoder_outputs = model.model.encoder(input_features)
+            # last_hidden_state shape: (B, T_enc, d_model)
+            last_hidden = encoder_outputs.last_hidden_state
+            # mean-pool across time
+            utterance_embeddings = last_hidden.mean(dim=1)  # (B, d_model)
+
+        embeddings.append(utterance_embeddings.cpu().numpy())
+
+    return np.concatenate(embeddings, axis=0)
+
+
 def train_classifier(
     train_embeddings: np.ndarray,
     train_labels: List[str],

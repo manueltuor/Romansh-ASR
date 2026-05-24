@@ -9,7 +9,7 @@ notebook_dir = Path.cwd()
 whisper_dir = notebook_dir.parent
 sys.path.append(str(whisper_dir))
 
-from whisper_asr import load_all_data, extract_decoder_embeddings, train_classifier
+from whisper_asr import load_all_data, extract_decoder_embeddings, train_classifier, extract_encoder_embeddings
 from whisper_asr.utils import get_best_gpu
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -28,18 +28,16 @@ train_df = load_all_data("train")
 test_df = load_all_data("test")
 
 # Cell 4: Extract embeddings for train and test sets
-print("Extracting train embeddings...")
-train_embeddings = extract_decoder_embeddings(
+print("Extracting train encoder embeddings...")
+train_embeddings = extract_encoder_embeddings(
     model, processor,
     train_df["audio_path"].tolist(),
-    train_df["sentence"].tolist(),
     device=DEVICE, batch_size=8
 )
-print("Extracting test embeddings...")
-test_embeddings = extract_decoder_embeddings(
+print("Extracting test encoder embeddings...")
+test_embeddings = extract_encoder_embeddings(
     model, processor,
     test_df["audio_path"].tolist(),
-    test_df["sentence"].tolist(),
     device=DEVICE, batch_size=8
 )
 

@@ -29,7 +29,7 @@ from .evaluate import (
     compute_normalized_results
 )
 from .utils import normalize_romansh_text
-from .classification import extract_decoder_embeddings, train_classifier
+from .classification import extract_decoder_embeddings, train_classifier, extract_encoder_embeddings
 
 __all__ = [
     "RomanshDataset",
