@@ -6,6 +6,7 @@
 
 # Data folder
 romansh-data/
+parquet-dataset/
 
 # pycache
 __pycache__/

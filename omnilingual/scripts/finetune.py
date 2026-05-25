@@ -20,8 +20,8 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm.auto import tqdm
 
 # User provided helpers and constants
-from helpers import get_idiom_name_by_folder, get_best_gpu
-from constants import DATA_ROOT, FOLDER_NAMES
+from omnilingual_asr.utils import get_idiom_name_by_folder, get_best_gpu
+from omnilingual_asr.constants import DATA_ROOT, FOLDER_NAMES
 
 # %% [markdown]
 # ## 1. Hardware & Path Setup
