@@ -22,6 +22,7 @@ omnilingual_romansh/
 dataset_*
 src/
 workflows/
+omnilingual-ctc-rm-all/
 
 # classifier
 idiom_classifier.pkl
