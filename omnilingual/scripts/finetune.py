@@ -27,7 +27,7 @@ from omnilingual_asr.utils import get_best_gpu
 # ----------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------
-OUTPUT_DIR = "./omnilingual-ctc-rm-all"              # where checkpoints/logs go
+OUTPUT_DIR = "./models/omnilingual-ctc-rm-1b"              # where checkpoints/logs go
 CONFIG_FILE = SUBMODULE_ROOT / "workflows/recipes/wav2vec2/asr/configs/romansh-ctc-finetune.yaml"
 
 # ----------------------------------------------------------------------
