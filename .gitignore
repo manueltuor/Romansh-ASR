@@ -23,6 +23,7 @@ dataset_*
 src/
 workflows/
 omnilingual-ctc-*/
+omnilingual-llm-*/
 
 # classifier
 idiom_classifier.pkl
