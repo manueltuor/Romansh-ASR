@@ -5,9 +5,9 @@ import librosa
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 from tqdm import tqdm
 from jiwer import wer, cer
-from typing import List, Optional
+from typing import List
+from collections import defaultdict
 from evaluate import load as load_metric
-from .utils import normalize_romansh_text
 
 class AudioDataset(Dataset):
     """Simple dataset that loads audio files and returns Whisper input features."""
@@ -92,76 +92,23 @@ def transcribe_whisper(
     
     return transcriptions
 
-def compute_wer_summary(
-    df: pd.DataFrame,
-    transcription_col: str,
-    reference_col: str = "sentence",
-    idiom_col: str = "idiom"
-) -> pd.DataFrame:
-    """
-    Compute per‑idiom WER summary statistics.
-    
-    Args:
-        df: DataFrame containing references, transcriptions, and idiom labels.
-        transcription_col: Column name for the hypothesis transcriptions.
-        reference_col: Column name for the reference transcriptions.
-        idiom_col: Column name for the idiom labels.
-    
-    Returns:
-        DataFrame with per‑idiom WER means, standard deviations, and sample counts.
-        DataFrame with added wer and cer scores.
-    """
-    def compute_wer_safe(ref: str, hyp: str) -> Optional[float]:
-        if ref and hyp:
-            try:
-                return wer(ref, hyp)
-            except:
-                return None
-        return None
-    
-    def compute_cer_safe(ref: str, hyp: str) -> Optional[float]:
-        if ref and hyp:
-            try:
-                return cer(ref, hyp)
-            except:
-                return None
-        return None
-    
-    df_copy = df.copy()
-    df_copy['wer'] = df_copy.apply(
-        lambda row: compute_wer_safe(row[reference_col], row[transcription_col]), axis=1
-    )
-    df_copy['cer'] = df_copy.apply(
-        lambda row: compute_cer_safe(row[reference_col], row[transcription_col]), axis=1
-    )
-    
-    idiom_summary = df_copy.groupby(idiom_col).agg(
-        samples=(reference_col, 'count'),
-        wer_mean=('wer', 'mean'),
-        wer_std=('wer', 'std')
-    ).reset_index()
-    
-    overall = pd.DataFrame({
-        idiom_col: ['OVERALL'],
-        'samples': [len(df_copy)],
-        'wer_mean': [df_copy['wer'].mean()],
-        'wer_std': [df_copy['wer'].std()]
-    })
-    
-    summary = pd.concat([idiom_summary, overall], ignore_index=True)
-    summary = summary.round(4)
-    summary['wer_mean'] *= 100
-    summary['wer_std'] *= 100
-    return summary, df_copy
-
 def compute_wer(reference: str, hypothesis: str) -> float:
     """
-    Compute Word Error Rate (WER) as a float (0.0 to 1.0).
+    Compute Word Error Rate (WER) as a float.
     Raises ValueError if inputs are empty.
     """
     if not reference or not hypothesis:
         raise ValueError("Reference and hypothesis must be non-empty strings.")
     return wer(reference, hypothesis)
+
+def compute_cer(reference: str, hypothesis: str) -> float:
+    """
+    Compute Character Error Rate (CER) as a float.
+    Raises ValueError if inputs are empty.
+    """
+    if not reference or not hypothesis:
+        raise ValueError("Reference and hypothesis must be non-empty strings.")
+    return cer(reference, hypothesis)
 
 def compute_metrics(pred, tokenizer):
     """
@@ -186,9 +133,6 @@ def compute_idiom_results(references, transcriptions, idioms):
     Compute overall and per-idiom WER/CER.
     Returns: summary_df, overall_wer, overall_cer, valid_pairs
     """
-    from jiwer import wer, cer
-    from collections import defaultdict
-
     idiom_data = defaultdict(lambda: {"refs": [], "hyps": []})
     valid_pairs = []
     for ref, hyp, idiom in zip(references, transcriptions, idioms):
@@ -237,13 +181,3 @@ def print_evaluation_results(summary_df, overall_wer, overall_cer, total_samples
     print("SUMMARY TABLE")
     print("="*50)
     print(summary_df.to_string(index=False))
-
-def compute_normalized_results(references, transcriptions, idioms):
-    """
-    Apply text normalization, then compute overall and per‑idiom WER/CER.
-    Returns the same tuple as compute_idiom_results:
-        (summary_df, overall_wer, overall_cer, valid_pairs)
-    """
-    norm_refs = [normalize_romansh_text(r) for r in references]
-    norm_hyps = [normalize_romansh_text(h) for h in transcriptions]
-    return compute_idiom_results(norm_refs, norm_hyps, idioms)

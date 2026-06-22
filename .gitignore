@@ -7,6 +7,8 @@
 # Data folder
 romansh-data/
 parquet-dataset/
+data/raw-data/
+data/clean-data/
 
 # pycache
 __pycache__/

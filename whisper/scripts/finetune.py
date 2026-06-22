@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 import torch
 from transformers import Seq2SeqTrainer
+from functools import partial
 
 # Ensure the package is importable
 notebook_dir = Path.cwd()
@@ -18,13 +19,12 @@ from whisper_asr import (
     compute_metrics,
     get_training_args,
 )
-from whisper_asr.utils import get_best_gpu
+from whisper_asr.constants import MODELS_ROOT
 
 # Disable tokenizer parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 DEVICE = torch.device("cuda")
-#DEVICE = torch.device(f"cuda:{get_best_gpu()}" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
 
 # Cell 2: Load Data (now returns plain lists)
@@ -35,7 +35,7 @@ print(f"Train samples: {len(train_samples)}, Validation samples: {len(val_sample
 
 # Cell 3: Load Model & Processor (with Italian language fixed)
 MODEL_NAME = "openai/whisper-medium"
-OUTPUT_DIR = "../models/whisper-medium-rm-all-it-2"
+OUTPUT_DIR = MODELS_ROOT / "whisper-medium-rm"
 
 model, feature_extractor, tokenizer, processor = load_model_and_processor(
     MODEL_NAME, DEVICE, language="it"
@@ -66,7 +66,6 @@ print("Training arguments:")
 print(training_args)
 
 # Cell 6: Define a wrapper for compute_metrics that already knows the tokenizer.
-from functools import partial
 compute_metrics_fn = partial(compute_metrics, tokenizer=tokenizer)
 
 # Cell 7: Initialize Trainer

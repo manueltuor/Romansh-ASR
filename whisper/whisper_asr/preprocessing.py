@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup
 from sklearn.model_selection import train_test_split
 from typing import List, Optional
 
-from .constants import DATA_ROOT, FOLDER_NAMES
+from .constants import CLEAN_DATA_ROOT as DATA_ROOT, FOLDER_NAMES
+from .utils import normalize_romansh_text
 
 def clean_html(text: Optional[str]) -> str:
     """
@@ -39,6 +40,7 @@ def preprocess_tsv_file(tsv_path: str) -> int:
         return 0
 
     df['sentence'] = df['sentence'].apply(clean_html)
+    df['sentence'] = df['sentence'].apply(normalize_romansh_text)
     df.to_csv(tsv_path, sep='\t', index=False)
     return len(df)
 

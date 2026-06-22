@@ -34,7 +34,7 @@ def get_idiom_name_by_folder(folder_name):
   match name:
     case "sursilv":
       return "Sursilvan"
-    case "surmiran":
+    case "sursiv":
       return "Surmiran"
     case "sutsilv":
       return "Sutsilvan"

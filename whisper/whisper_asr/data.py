@@ -4,15 +4,14 @@ from collections import defaultdict
 from tqdm import tqdm
 from torch.utils.data import Dataset
 from datasets import Dataset as HFDataset, DatasetDict
-from transformers import WhisperProcessor, WhisperFeatureExtractor, WhisperTokenizer
+from transformers import WhisperProcessor
 from typing import List, Dict
 import librosa
 import torch
 import numpy as np
 
-from .constants import DATA_ROOT, FOLDER_NAMES, SPLITS
+from .constants import CLEAN_DATA_ROOT as DATA_ROOT, FOLDER_NAMES, SPLITS
 from .utils import get_audio_duration, get_idiom_name_by_folder
-
 
 class RomanshDataset(HFDataset):
     DATA_ROOT = DATA_ROOT
