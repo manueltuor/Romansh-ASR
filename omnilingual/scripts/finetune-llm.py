@@ -15,6 +15,14 @@ best_gpu = get_best_gpu()
 os.environ["CUDA_VISIBLE_DEVICES"] = str(best_gpu)
 print(f"Using GPU {best_gpu}")
 
+# Thread limiting
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+#os.environ["TQDM_DISABLE"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+
 # Now we can safely import torch
 import torch
 
@@ -22,12 +30,6 @@ import torch
 env = os.environ.copy()
 pythonpath = env.get("PYTHONPATH", "")
 env["PYTHONPATH"] = str(SUBMODULE_ROOT) + (f":{pythonpath}" if pythonpath else "")
-
-# Thread limiting
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ["TQDM_DISABLE"] = "1"
 
 # Configuration
 OUTPUT_DIR = "./models/omnilingual-llm-rm-1b"
@@ -58,6 +60,7 @@ cmd = [
     "python", "-m", "workflows.recipes.wav2vec2.asr",
     OUTPUT_DIR,
     "--config-file", str(CONFIG_FILE),
+    "--lora",
 ]
 
 print("=" * 60)
