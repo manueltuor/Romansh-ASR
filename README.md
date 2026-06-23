@@ -1,21 +1,68 @@
-# Automated Speech Recognition for Romansh
+# Automatic Speech Recognition for Romansh
 
-This project is part of my bachelors thesis at the department of computer linguistics. The goal is to create automated speech recognition for romansh the 4th official swiss national language.
+This project is part of my bachelors thesis at the department of computer linguistics. The goal is to create an automatic speech recognition system for Romansh the 4th official swiss national language. For this project we finetune ASR models using OpenAI's [Whisper](https://github.com/openai/whisper) and Meta's [Omnilingual](https://github.com/facebookresearch/omnilingual-asr).
 
-## Start
+## Data
 
-First you need to create and activate the python virtual environment, as well as install the requirements via these commands in the terminal.
+The data is from the Romansh radio and television and can be obtained via the [RTR Linguistic API](https://developer.srgssr.ch/en/apis/rtr-linguistic). It should be saved in the `data/raw-data` directory at root level. The exact pipeline for downloading the data is provided under `common/Data_Loading.ipynb`. Your data folder should look like this after you downloaded the data:
+
+```
+raw-data/
+├── rm-cc-2021-05-28/             # Rumantsch Grischun
+│   ├── train.tsv
+│   ├── validated.tsv
+│   ├── test.tsv
+│   └── clips/
+│       └── *.wav
+├── rmsursilv-cc-2021-05-28/      # Sursilvan
+│   └── ... (same structure)
+├── rmvallader-cc-2021-05-28/     # Vallader
+├── rmputer-cc-2021-06-11/        # Puter
+├── rmsutsilv-cc-2022-05-18/      # Sutsilvan
+└── rmsursiv-cc-2021-12-23/       # Surmiran
+.gitkeep
+```
+
+## Whisper
+
+First you should run the code in the Whisper directory since this also includes the data preprocessing. For further information refer to `whisper/README.md`. To create the virtual environment for Whisper run this:
 
 ```bash
-python3 -m venv .venv
+cd whisper
+python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Data
+## Omnilingual
 
-The data can be obtained via the [RTR Linguistic API](https://developer.srgssr.ch/en/apis/rtr-linguistic). It should be saved in a directory named `romansh-data` at root level.
+After you ran the data preprocessing from the Whisper part, you can run the Omnilingual part. To create the virtual environment for Omnilingual run this:
 
-## Training
+```bash
+cd omnilingual
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-Once your environment is set up and you have the data, you can run the Jupyter Notebooks in order.
+## Results
+
+### WER on test set
+
+| Model | Sursilvan | Surmiran | Sutsilvan | Puter | Vallader | RG | Total |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| **Whisper-medium baseline** | 98.08 | 104.69 | 106.68 | 94.91 | 93.12 | 89.23 | 97.97 |
+| **Whisper-medium finetuned** | 14.52 | 11.25 | 17.31 | 10.42 | 18.86 | 4.43 | 12.88 |
+| **Omnilingual-ctc-1b baseline** | 75.75 | 81.98 | 84.48 | 73.82 | 73.74 | 55.08 | 75.14 |
+| **Omnilingual-ctc-1b finetuned** | 28.4 | 32.22 | 32.93 | 26.63 | 23.8 | 10.47 | 26.59 |
+
+<br>
+
+### CER on test set
+
+| Model | Sursilvan | Surmiran | Sutsilvan | Puter | Vallader | RG | Total |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| **Whisper-medium baseline** | 54.78 | 56.01 | 67.61 | 52.3 | 51.17 | 50.37 | 55.4 |
+| **Whisper-medium finetuned** | | | | | | | |
+| **Omnilingual-ctc-1b baseline** | | | | | | | |
+| **Omnilingual-ctc-1b finetuned** | | | | | | | |
