@@ -4,8 +4,8 @@ import polars as pl
 from pathlib import Path
 import sys
 
-notebook_dir = Path.cwd()
-submodule_root = notebook_dir.parent / 'omnilingual_asr'
+scripts_dir = Path(__file__).resolve().parent
+submodule_root = scripts_dir.parent / 'omnilingual_asr'
 sys.path.insert(0, str(submodule_root))
 
 from omnilingual_asr.constants import PARQUET_DATA_ROOT, LANG_DIST_FILE_ROOT

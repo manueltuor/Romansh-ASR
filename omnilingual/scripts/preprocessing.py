@@ -16,8 +16,8 @@ from tqdm import tqdm
 from omnilingual_asr.utils import get_idiom_name_by_folder, normalize_romansh_text, get_language_code_by_folder
 from omnilingual_asr.constants import FOLDER_NAMES, DATA_ROOT, PARQUET_DATA_ROOT
 
-notebook_dir = Path.cwd()
-submodule_root = notebook_dir.parent / 'omnilingual_asr'
+scripts_dir = Path(__file__).resolve().parent
+submodule_root = scripts_dir.parent / 'omnilingual_asr'
 sys.path.insert(0, str(submodule_root))
 
 # ----------------------------------------------------------------------
@@ -39,7 +39,7 @@ def compress_audio_to_ogg(audio_array, sample_rate):
 # Import official conversion utility (from the copied repo)
 # ----------------------------------------------------------------------
 sys.path.insert(0, os.getcwd())                # add current dir to Python path
-from workflows.dataprep.audio_tools import binary_to_list_int8
+from omnilingual_asr.workflows.dataprep.audio_tools import binary_to_list_int8
 print("✅ Using official binary_to_list_int8")
 
 # ----------------------------------------------------------------------

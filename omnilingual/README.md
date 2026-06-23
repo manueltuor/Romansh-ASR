@@ -26,7 +26,7 @@ To preprocess the data you will need to run the `notebooks/1_Data_Preprocessing.
 raw-data/
 clean-data/
 parquet-data/
-└── version=0/
+├── version=0/
 │   ├── corpus=RG/                                          # Rumantsch Grischun
 │   │   ├── split=test/language=roh_Latn_ruma1247/
 │   │   ├── split=train/language=roh_Latn_ruma1247/

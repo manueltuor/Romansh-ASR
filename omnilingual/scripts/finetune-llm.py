@@ -11,6 +11,7 @@ SUBMODULE_ROOT = ROOT_DIR / "omnilingual_asr"
 # GPU selection (before torch)
 sys.path.insert(0, str(ROOT_DIR))
 from omnilingual_asr.utils import get_best_gpu
+from omnilingual_asr.constants import LANG_DIST_FILE_ROOT, MODELS_ROOT
 best_gpu = get_best_gpu()
 os.environ["CUDA_VISIBLE_DEVICES"] = str(best_gpu)
 print(f"Using GPU {best_gpu}")
@@ -32,7 +33,7 @@ pythonpath = env.get("PYTHONPATH", "")
 env["PYTHONPATH"] = str(SUBMODULE_ROOT) + (f":{pythonpath}" if pythonpath else "")
 
 # Configuration
-OUTPUT_DIR = "./models/omnilingual-llm-rm-1b"
+OUTPUT_DIR = MODELS_ROOT / "omnilingual-llm-rm-1b"
 CONFIG_FILE = SUBMODULE_ROOT / "workflows/recipes/wav2vec2/asr/configs/romansh-llm-finetune.yaml"
 
 # GPU status
@@ -43,7 +44,7 @@ else:
 
 # Pre‑flight checks
 dataset_card = SUBMODULE_ROOT / "src/omnilingual_asr/cards/datasets/romansh_dataset.yaml"
-stats_file = Path("/local/scratch/matuor/parquet-dataset/rm-dataset/language_distribution_0.tsv")
+stats_file = LANG_DIST_FILE_ROOT
 
 missing = []
 for f in [dataset_card, stats_file, CONFIG_FILE]:

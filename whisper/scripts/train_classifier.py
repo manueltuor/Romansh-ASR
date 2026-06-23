@@ -11,13 +11,14 @@ whisper_dir = notebook_dir.parent
 sys.path.append(str(whisper_dir))
 
 from whisper_asr import load_all_data, train_classifier, extract_encoder_embeddings
+from whisper_asr.constants import MODELS_ROOT
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 DEVICE = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
 
 # Cell 2: Load model & processor
-MODEL_PATH = "../models/whisper-medium-rm-all-it"
+MODEL_PATH = MODELS_ROOT / "whisper-medium-rm"
 processor = WhisperProcessor.from_pretrained(MODEL_PATH)
 model = WhisperForConditionalGeneration.from_pretrained(MODEL_PATH).to(DEVICE)
 print("Model loaded.")
@@ -50,4 +51,4 @@ classifier, predictions = train_classifier(
 )
 
 # Optionally save the classifier
-joblib.dump(classifier, "../models/idiom_classifier.pkl")
+joblib.dump(classifier, MODELS_ROOT / "idiom_classifier.pkl")
