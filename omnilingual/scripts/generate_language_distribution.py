@@ -1,6 +1,14 @@
 import pyarrow.dataset as pa_ds
 import pyarrow as pa
 import polars as pl
+from pathlib import Path
+import sys
+
+notebook_dir = Path.cwd()
+submodule_root = notebook_dir.parent / 'omnilingual_asr'
+sys.path.insert(0, str(submodule_root))
+
+from omnilingual_asr.constants import PARQUET_DATA_ROOT, LANG_DIST_FILE_ROOT
 
 unified_schema = pa.schema([
     ("language", pa.string()),
@@ -9,7 +17,7 @@ unified_schema = pa.schema([
 ])
 
 ds = pa_ds.dataset(
-    "../parquet-dataset/rm-dataset/version=0",
+    PARQUET_DATA_ROOT,
     partitioning="hive",
     schema=unified_schema,
     exclude_invalid_files=True,
@@ -23,7 +31,7 @@ stats = (
     .agg((pl.col("audio_size").sum() / 3600 / 16_000).alias("hours"))
 )
 stats.write_csv(
-    "../parquet-dataset/rm-dataset/language_distribution_0.tsv",
+    LANG_DIST_FILE_ROOT,
     separator="\t"
 )
 print("Stats written.")

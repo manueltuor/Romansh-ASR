@@ -9,6 +9,7 @@ romansh-data/
 parquet-dataset/
 data/raw-data/
 data/clean-data/
+data/parquet-data/
 
 # pycache
 __pycache__/
