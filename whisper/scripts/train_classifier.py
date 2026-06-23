@@ -3,17 +3,16 @@ import sys
 import os
 from pathlib import Path
 import torch
+import joblib
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 notebook_dir = Path.cwd()
 whisper_dir = notebook_dir.parent
 sys.path.append(str(whisper_dir))
 
-from whisper_asr import load_all_data, extract_decoder_embeddings, train_classifier, extract_encoder_embeddings
-from whisper_asr.utils import get_best_gpu
+from whisper_asr import load_all_data, train_classifier, extract_encoder_embeddings
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-#DEVICE = torch.device(f"cuda:{get_best_gpu()}" if torch.cuda.is_available() else "cpu")
 DEVICE = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
 
@@ -51,5 +50,4 @@ classifier, predictions = train_classifier(
 )
 
 # Optionally save the classifier
-import joblib
 joblib.dump(classifier, "../models/idiom_classifier.pkl")
