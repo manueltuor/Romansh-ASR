@@ -7,6 +7,7 @@ This directory focuses on the Omnilingual finetuning. Below it will be detailed 
 Please set up your virtual environment the first time.
 
 ```bash
+cd omnilingual
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -15,6 +16,7 @@ pip install -r requirements.txt
 After it is set up you can just activate it at the start.
 
 ```bash
+cd omnilingual
 source .venv/bin/activate
 ```
 
@@ -83,4 +85,4 @@ python scripts/evaluate-checkpoint.py
 
 ## Notebooks
 
-All the scripts are also available as notebooks in the `noteboks` directory
+All the scripts are also available as jupyter notebooks in the `noteboks` directory. Running the notebooks in sequence is also a way of recreating the results.

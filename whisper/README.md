@@ -16,6 +16,7 @@ pip install -r requirements.txt
 After it is set up you can just activate it at the start.
 
 ```bash
+cd whisper
 source .venv/bin/activate
 ```
 
@@ -79,4 +80,4 @@ python scripts/evaluate-classifier.py
 
 ## Notebooks
 
-All the scripts are also available as notebooks in the `noteboks` directory. Running the notebooks in sequence is also a way of recreating the results.
+All the scripts are also available as jupyter notebooks in the `noteboks` directory. Running the notebooks in sequence is also a way of recreating the results.
