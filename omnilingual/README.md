@@ -1,6 +1,6 @@
 # Omnilingual
 
-This directory focuses on the Omnilingual finetuning. One way to reproduce the results is given by running the jupyter notebooks in `notebooks` in sequence. Before running code in this section please make sure that the `raw-data` and the `clean-data` folders exist.
+This directory focuses on the Omnilingual finetuning. Below it will be detailed how the results can be reproduced. Before running code in this section please make sure that the `data/raw-data` and the `data/clean-data` folders exist. If the `clean-data` folder was not created please refer to the whisper part to create it.
 
 ## Virtual Environment
 
@@ -20,7 +20,19 @@ source .venv/bin/activate
 
 ## Data
 
-To preprocess the data you will need to run the `notebooks/1_Data_Preprocessing.ipynb` jupyter notebook or the `scripts/preprocessing.py` script after that you need to run the `scripts/generate_language_distribution.py`script. After you did this your data folder should look the following way:
+To preprocess the data run the following script from the `omnilingual` directory:
+
+```bash
+python scripts/preprocessing.py
+```
+
+After you need to generate the language distribution file:
+
+```bash
+python scripts/generate-language-distribution.py
+```
+
+After you did this your data folder should look the following way:
 
 ```
 raw-data/
@@ -48,4 +60,27 @@ parquet-data/
 
 ## Finetuning
 
-After successful preprocessing, model finetuning can be done via `notebooks/2_Omnilingual_Finetuning.ipynb` or `scripts/finetune.py`. The model will be saved under `models/` and can be evaluated via `notebooks/3_Omnilingual_Evaluation.ipynb`.
+After successful preprocessing we get to the finetuning part. You may set the training configuration in
+[romansh-ctc-finetune.yaml](omnilingual_asr/workflows/recipes/wav2vec2/asr/configs/romansh-ctc-finetune.yaml). The Model finetuning can be started via:
+
+```bash
+python scripts/finetune.py
+```
+
+## Evaluation
+
+To evaluate an official omnilingual model on the romansh test set, set the file name in [scripts/evaluate.py](scripts/evaluate.py) and run:
+
+```bash
+python scripts/evaluate.py
+```
+
+To evaluate your own finetuned checkpoint, set the checkpoint path in [scripts/evaluate-checkpoint.py](scripts/evaluate-checkpoint.py) file and run:
+
+```bash
+python scripts/evaluate-checkpoint.py
+```
+
+## Notebooks
+
+All the scripts are also available as notebooks in the `noteboks` directory
