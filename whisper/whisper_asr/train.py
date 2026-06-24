@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 @dataclass
 class TrainingConfig:
+    """Configuration hyper-parameters for the custom PyTorch training execution loop."""
     output_dir: str = "./models/whisper-small-rm"
     num_epochs: int = 10
     batch_size: int = 8
@@ -21,6 +22,9 @@ class TrainingConfig:
     fp16: bool = True            # set True if using mixed precision (requires GPU)
 
 class Trainer:
+    """
+    An explicit training and evaluation orchestrator for encoder-decoder ASR models.
+    """
     def __init__(
         self,
         model: WhisperForConditionalGeneration,
@@ -28,8 +32,9 @@ class Trainer:
         train_dataloader: DataLoader,
         val_dataloader: DataLoader,
         config: TrainingConfig,
-        compute_wer_fn: Callable[[str, str], float],   # & returns a float in [0,1]
+        compute_wer_fn: Callable[[str, str], float],   # & returns a float
     ):
+        """Initializes the training ecosystem components and tracking states."""
         self.model = model
         self.processor = processor
         self.train_dataloader = train_dataloader
@@ -40,7 +45,7 @@ class Trainer:
         self.device = next(model.parameters()).device
         self.optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
 
-        # Optional: learning rate scheduler (linear warmup + linear decay)
+        # OneCycleLR calculation mapping physical steps to simulated macro-batch steps
         total_steps = len(train_dataloader) // config.gradient_accumulation_steps * config.num_epochs
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(
             self.optimizer,
@@ -50,6 +55,7 @@ class Trainer:
         ) if config.warmup_steps > 0 else None
 
     def train(self):
+        """Executes the standard forward, backward, optimization, and evaluation loop cycles."""
         global_step = 0
         for epoch in range(self.config.num_epochs):
             self.model.train()
@@ -59,10 +65,12 @@ class Trainer:
             for step, batch in enumerate(progress_bar):
                 batch = {k: v.to(self.device) for k, v in batch.items()}
                 outputs = self.model(**batch)
+                # Scale the loss downward to account for multi-step gradient accumulation updates
                 loss = outputs.loss / self.config.gradient_accumulation_steps
                 loss.backward()
                 total_loss += loss.item()
 
+                # Trigger model weight adjustments at specified accumulation step margins
                 if (step + 1) % self.config.gradient_accumulation_steps == 0:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
                     self.optimizer.step()
@@ -71,13 +79,13 @@ class Trainer:
                     self.optimizer.zero_grad()
                     global_step += 1
 
-                    # Logging
+                    # Logging diagnostics
                     if global_step % self.config.logging_steps == 0:
                         avg_loss = total_loss / (self.config.logging_steps * self.config.gradient_accumulation_steps)
                         progress_bar.set_postfix({"loss": f"{avg_loss:.4f}", "step": global_step})
                         total_loss = 0.0
 
-                    # Evaluation
+                    # Evaluation check interval
                     if global_step % self.config.eval_steps == 0:
                         self.evaluate(global_step)
 
@@ -85,10 +93,11 @@ class Trainer:
                     if global_step % self.config.save_steps == 0:
                         self.save_checkpoint(global_step)
 
-            # Evaluate at end of epoch (optional)
+            # Evaluate at end of epoch
             self.evaluate(f"epoch_{epoch+1}")
 
     def evaluate(self, step):
+        """Runs validation inference across the evaluation dataset to yield aggregate WER metrics."""
         self.model.eval()
         total_wer = 0.0
         n_samples = 0
@@ -97,7 +106,7 @@ class Trainer:
                 batch = {k: v.to(self.device) for k, v in batch.items()}
                 generated_ids = self.model.generate(batch["input_features"])
                 preds = self.processor.batch_decode(generated_ids, skip_special_tokens=True)
-                # Decode references while ignoring -100
+                # Revert -100 cross-entropy mask indexes back to structural pad tokens for proper string decoding
                 labels = batch["labels"]
                 labels[labels == -100] = self.processor.tokenizer.pad_token_id
                 refs = self.processor.batch_decode(labels, skip_special_tokens=True)
@@ -112,6 +121,7 @@ class Trainer:
         self.model.train()
 
     def save_checkpoint(self, step):
+        """Persists model weight tensors and vocabulary processor assets to disk storage."""
         os.makedirs(self.config.output_dir, exist_ok=True)
         checkpoint_path = os.path.join(self.config.output_dir, f"checkpoint-{step}")
         self.model.save_pretrained(checkpoint_path)
@@ -119,7 +129,14 @@ class Trainer:
         print(f"Checkpoint saved to {checkpoint_path}")
 
 def get_training_args(output_dir: str, **overrides) -> Seq2SeqTrainingArguments:
-    """Return the exact training arguments from the original notebook."""
+    """
+    Args:
+        output_dir (str): Location where model assets and runs will save.
+        **overrides: Arbitrary keyword adjustments to mutate default configurations.
+
+    Returns:
+        Seq2SeqTrainingArguments: Configured asset parameters ready for Hugging Face Trainers.
+    """
     defaults = dict(
         output_dir=output_dir,
         per_device_train_batch_size=8,

@@ -16,6 +16,7 @@ def clean_html(text: Optional[str]) -> str:
     if pd.isna(text) or not isinstance(text, str):
         return ""
 
+    # Replaced with a space instead of stripped to prevent separate words from merging
     text = re.sub(r'<br\s*/?>', ' ', text, flags=re.IGNORECASE)
     text = re.sub(r'</?p\s*/?>', ' ', text, flags=re.IGNORECASE)
 
@@ -39,8 +40,11 @@ def preprocess_tsv_file(tsv_path: str) -> int:
         print(f"Warning: No 'sentence' column found in {tsv_path}")
         return 0
 
+    # strip html tags and normalize text
     df['sentence'] = df['sentence'].apply(clean_html)
     df['sentence'] = df['sentence'].apply(normalize_romansh_text)
+
+    # Overwrites the raw text source data in-place
     df.to_csv(tsv_path, sep='\t', index=False)
     return len(df)
 
@@ -86,12 +90,14 @@ def create_validation_splits(
 
         print(f"Creating validation split for {idiom_folder}...")
         train_df = pd.read_csv(train_path, sep='\t')
+        # sampling train and validation set
         train_data, val_data = train_test_split(
             train_df,
             test_size=val_size,
             random_state=random_state
         )
 
+        # Overwrites train and validation data of original training file with subsamples
         train_data.to_csv(train_path, sep='\t', index=False)
         val_data.to_csv(val_path, sep='\t', index=False)
 

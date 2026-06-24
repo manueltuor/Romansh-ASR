@@ -1,12 +1,13 @@
 # Whisper
 
-This directory focuses on the Whisper finetuning. One way to reproduce the results is given by running the jupyter notebooks in `notebooks` in sequence. Before running code in this section please make sure that the `raw-data` folder exists and is organised according to the root level `README.md`.
+This directory focuses on the Whisper finetuning. Below it will be detailed how the results can be reproduced. Before running code in this section please make sure that the `raw-data` folder exists and is organised according to the root level [README.md](../README.md).
 
 ## Virtual Environment
 
 Please set up your virtual environment the first time.
 
 ```bash
+cd whisper
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -20,7 +21,13 @@ source .venv/bin/activate
 
 ## Data
 
-To preprocess the data you will need to run the `notebooks/0_Data_Preprocessing.ipynb` jupyter notebook or the `scripts/preprocessing.py` script. After you did this your data folder should look the following way:
+To preprocess the data run the following script from the `whisper` directory:
+
+```bash
+python scripts/preprocessing.py
+```
+
+After you did this your data folder should look the following way:
 
 ```
 raw-data/
@@ -42,8 +49,34 @@ clean-data/
 
 ## Finetuning
 
-After successful preprocessing, model finetuning can be done via `notebooks/3_Whisper_Finetuning.ipynb` or `scripts/finetune.py`. The model will be saved under `models/` and can be evaluated via `notebooks/4_Whisper_Evaluation.ipynb`.
+After successful preprocessing, model finetuning can be started via:
+
+```bash
+python scripts/finetune.py
+```
 
 ## Idiom Classification
 
-After finetuning the model you can also train an idiom classifier on the encoder embeddings of the finetuned Whisper model. For this run either `notebooks/5_Idiom_Classification.ipynb` or `scripts/train_classifier.py` then evaluate with `notebooks/6_Classifier_Evaluation.ipynb`.
+After finetuning the model you can also train an idiom classifier on the encoder embeddings of the finetuned Whisper model. For this run:
+
+```bash
+python scripts/train-classifier.py
+```
+
+## Evaluation
+
+To evaluate a Whisper model you can use the [scripts/evaluate-whisper.py](scripts/evaluate-whisper.py) script, set the `MODEL_PATH` constant to specify which model you want to evaluate.
+
+```bash
+python scripts/evaluate-whisper.py
+```
+
+To evaluate your idiom classifier run the following script:
+
+```bash
+python scripts/evaluate-classifier.py
+```
+
+## Notebooks
+
+All the scripts are also available as notebooks in the `noteboks` directory. Running the notebooks in sequence is also a way of recreating the results.

@@ -16,19 +16,30 @@ def load_model_and_processor(
 ):
     """
     Load model, feature extractor, tokenizer, processor.
-    Optionally force the decoder to always start with a given language token.
+
+    Args:
+        model_name (str): Hugging Face repository ID or local directory path.
+        device (str | None): Target compute device. If None, resolves dynamically.
+        language (str): Target language identifier token proxy (e.g., "it" for Italian).
+        task (str): Downstream task generation mode, typically "transcribe" or "translate".
+        use_forced_decoder_ids (bool): If True, forces generation to start with language/task tokens.
+
+    Returns:
+        tuple: (model, feature_extractor, tokenizer, processor) fully initialized.
     """
     if device is None:
-        device = f"cuda:{get_best_gpu}" if torch.cuda.is_available() else "cpu"
+        device = f"cuda:{get_best_gpu()}" if torch.cuda.is_available() else "cpu"
 
     feature_extractor = WhisperFeatureExtractor.from_pretrained(model_name)
     tokenizer = WhisperTokenizer.from_pretrained(model_name, task=task)
     processor = WhisperProcessor.from_pretrained(model_name, task=task)
 
     model = WhisperForConditionalGeneration.from_pretrained(model_name)
-    model.config.use_cache = False   # as in original
+    # Must be False to allow gradient checkpointing during fine-tuning
+    model.config.use_cache = False
 
     if use_forced_decoder_ids:
+        # Explicitly hardcodes the target language token to stop Whisper from guessing
         forced_ids = processor.get_decoder_prompt_ids(
             language=language, task=task
         )

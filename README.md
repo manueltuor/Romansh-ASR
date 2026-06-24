@@ -4,7 +4,7 @@ This project is part of my bachelors thesis at the department of computer lingui
 
 ## Data
 
-The data is from the Romansh radio and television and can be obtained via the [RTR Linguistic API](https://developer.srgssr.ch/en/apis/rtr-linguistic). It should be saved in the `data/raw-data` directory at root level. The exact pipeline for downloading the data is provided under `common/Data_Loading.ipynb`. Your data folder should look like this after you downloaded the data:
+The data is from the Romansh radio and television and can be obtained via the [RTR Linguistic API](https://developer.srgssr.ch/en/apis/rtr-linguistic). It should be saved in the `data/raw-data` directory at root level. The exact pipeline for downloading the data is provided under [common/Data_Loading.ipynb](common/Data_Loading.ipynb). Your data folder should look like this after you downloaded the data:
 
 ```
 raw-data/
@@ -25,7 +25,7 @@ raw-data/
 
 ## Whisper
 
-First you should run the code in the Whisper directory since this also includes the data preprocessing. For further information refer to `whisper/README.md`. To create the virtual environment for Whisper run this:
+First you should run the code in the Whisper directory since this also includes the data preprocessing. For further information refer to [whisper/README.md](whisper/README.md). To create the virtual environment for Whisper run this:
 
 ```bash
 cd whisper
@@ -36,7 +36,7 @@ pip install -r requirements.txt
 
 ## Omnilingual
 
-After you ran the data preprocessing from the Whisper part, you can run the Omnilingual part. To create the virtual environment for Omnilingual run this:
+After you ran the data preprocessing from the Whisper part, you can run the Omnilingual part. For further information please refer to [omnilingual/README.md](omnilingual/README.md). To create the virtual environment for Omnilingual run this:
 
 ```bash
 cd omnilingual

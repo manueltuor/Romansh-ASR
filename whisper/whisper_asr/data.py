@@ -14,6 +14,10 @@ from .constants import CLEAN_DATA_ROOT as DATA_ROOT, FOLDER_NAMES, SPLITS
 from .utils import get_audio_duration, get_idiom_name_by_folder
 
 class RomanshDataset(HFDataset):
+    """
+    Custom Dataset variant built on top of Hugging Face's backend Apache Arrow data structures.
+    Handles downstream audio vectorization and text token tracking.
+    """
     DATA_ROOT = DATA_ROOT
 
     def __init__(self, manifest: List[Dict], processor: WhisperProcessor, max_input_length: int = 30, language: str = "it", task: str = "transcribe"):
@@ -27,11 +31,23 @@ class RomanshDataset(HFDataset):
         return len(self.manifest)
 
     def __getitem__(self, idx):
+        """
+        Loads and extracts features for a single sample index.
+        
+        1. Loads the target audio at a fixed 16kHz sample rate.
+        2. Computes the 80-channel Log-Mel Spectrogram arrays.
+        3. Clips the inputs to prevent VRAM overruns on outlier items.
+        4. Tokenizes target transcript annotations.
+        """
         item = self.manifest[idx]
+        # Audio disk ingestion via librosa (downsampled to Whisper standard 16kHz)
         audio, sr = librosa.load(item['audio_path'], sr=16000)
+        # Convert 1D waveform to 2D log-mel filterbank feature representation
         input_features = self.processor(audio, sampling_rate=16000, return_tensors="pt").input_features.squeeze(0)
+        # Enforce strict input ceiling limit constraint (1 second of audio maps to 100 feature frames)
         if input_features.shape[0] > self.max_input_length * 100:
             input_features = input_features[:self.max_input_length * 100]
+        # Standardize target textual labels to token sequence allocations
         labels = self.processor(
             text=item['transcript'],
             language=self.language,
@@ -48,12 +64,14 @@ class RomanshDataset(HFDataset):
     def aggregate_corpus_stats(cls) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """
         Aggregate statistics for the entire Romansh corpus using cls.DATA_ROOT.
-        Returns (duration_df, count_df, word_df).
+        Returns:
+            tuple: (duration_df, count_df, word_df) containing summary tracking metrics.
         """
         duration_stats = defaultdict(lambda: defaultdict(float))
         utterance_counts = defaultdict(lambda: defaultdict(int))
         word_counts = defaultdict(lambda: defaultdict(int))
 
+        # Iterate over idiom folders
         for idiom_file in FOLDER_NAMES:
             idiom_path = os.path.join(cls.DATA_ROOT, idiom_file)
             if not os.path.isdir(idiom_path):
@@ -62,6 +80,7 @@ class RomanshDataset(HFDataset):
 
             idiom = get_idiom_name_by_folder(idiom_file)
 
+            # Extract details per split
             for split in SPLITS:
                 tsv_path = os.path.join(idiom_path, f"{split}.tsv")
                 clips_path = os.path.join(idiom_path, "clips")
@@ -69,17 +88,21 @@ class RomanshDataset(HFDataset):
                     continue
 
                 df = pd.read_csv(tsv_path, sep="\t")
+                # Compute cumulative target script token densities
                 num_words = df["sentence"].astype(str).apply(lambda x: len(x.split())).sum()
                 word_counts[idiom][split] = num_words
-
+                
+                # Accumulate true audio file segment lengths
                 total_seconds = 0.0
                 for rel_path in tqdm(df["path"], desc=f" {split}", leave=False):
                     audio_path = os.path.join(clips_path, rel_path)
                     total_seconds += get_audio_duration(audio_path)
 
+                # Format seconds down to total hours metrics representation
                 duration_stats[idiom][split] = total_seconds / 3600.0
                 utterance_counts[idiom][split] = len(df)
 
+        # Reshape data structures into tabular pandas layouts
         duration_df = pd.DataFrame(duration_stats).T.fillna(0)
         count_df = pd.DataFrame(utterance_counts).T.fillna(0)
         word_df = pd.DataFrame(word_counts).T.fillna(0)
@@ -95,23 +118,33 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         self.processor = processor
 
     def __call__(self, features: List[Dict[str, torch.Tensor]]) -> Dict[str, torch.Tensor]:
+        """
+        Pads features and labels to match the maximum lengths encountered inside the micro-batch.
+        """
+        # Unpack split variables
         input_features = [{"input_features": f["input_features"]} for f in features]
         label_features = [{"input_ids": f["labels"]} for f in features]
 
+        # Standard pad application to input spectrogram frames
         batch = self.processor.feature_extractor.pad(
             input_features,
             return_tensors="pt",
         )
 
+        # Standard pad application to label text token tracking tracks
         labels_batch = self.processor.tokenizer.pad(
             label_features,
             return_tensors="pt",
         )
 
+        # Mask label token padding elements with -100.
+        # This flags PyTorch's CrossEntropyLoss engine to strictly ignore 
+        # padding positions when calculating backprop losses.
         labels = labels_batch["input_ids"].masked_fill(
             labels_batch.attention_mask.ne(1), -100
         )
 
+        # Strip off redundant Beginning-Of-Sequence (BOS) tokens if present across all instances
         if (labels[:, 0] == self.processor.tokenizer.bos_token_id).all().cpu().item():
             labels = labels[:, 1:]
 
@@ -120,27 +153,32 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         return batch
 
 def load_all_data(split):
+    """
+    Aggregates multiple individual idiom text files into a unified Pandas DataFrame matrix.
+    """
 
-  if split not in SPLITS:
-    raise Exception(f"Invalid split, must be one of: {SPLITS}")
+    if split not in SPLITS:
+        raise Exception(f"Invalid split, must be one of: {SPLITS}")
 
-  df = pd.DataFrame()
+    df = pd.DataFrame()
 
-  for folder_name in FOLDER_NAMES:
-    idiom_path = os.path.join(DATA_ROOT, folder_name)
-    split_path = os.path.join(idiom_path, split + ".tsv")
-    clips_path = os.path.join(idiom_path, "clips")
-    idiom_name = get_idiom_name_by_folder(folder_name)
+    for folder_name in FOLDER_NAMES:
+        idiom_path = os.path.join(DATA_ROOT, folder_name)
+        split_path = os.path.join(idiom_path, split + ".tsv")
+        clips_path = os.path.join(idiom_path, "clips")
+        idiom_name = get_idiom_name_by_folder(folder_name)
 
-    if not os.path.exists(split_path):
-      raise Exception(f"File {split_path} not found")
+        if not os.path.exists(split_path):
+            raise Exception(f"File {split_path} not found")
+        
+        df_idiom = pd.read_csv(split_path, sep='\t')
+        # Construct complete verifiable audio paths
+        df_idiom['audio_path'] = df_idiom['path'].apply(lambda p: os.path.join(clips_path, p))
+        df_idiom['idiom'] = idiom_name
+        # Concat subsets into global DataFrame
+        df = pd.concat([df, df_idiom[['audio_path', 'sentence', 'idiom']]], ignore_index=True)
     
-    df_idiom = pd.read_csv(split_path, sep='\t')
-    df_idiom['audio_path'] = df_idiom['path'].apply(lambda p: os.path.join(clips_path, p))
-    df_idiom['idiom'] = idiom_name
-    df = pd.concat([df, df_idiom[['audio_path', 'sentence', 'idiom']]], ignore_index=True)
-  
-  return df
+    return df
 
 def build_dataset_dict(
     folder_names: List[str] = FOLDER_NAMES,
@@ -168,6 +206,7 @@ def build_dataset_dict(
         train_df = pd.read_csv(train_path, sep="\t")
         val_df = pd.read_csv(val_path, sep="\t")
 
+        # Package matching sample items into native Python structured listings
         for _, row in train_df.iterrows():
             audio = os.path.join(clips_path, row["path"])
             if os.path.exists(audio):
@@ -185,7 +224,7 @@ def build_dataset_dict(
                     "sentence": str(row["sentence"]),
                     "idiom": idiom_name
                 })
-
+    # Convert the raw list configurations into explicit Dataset instances
     dataset_dict = DatasetDict({
         "train": Dataset.from_list(all_train),
         "validation": Dataset.from_list(all_val)
@@ -193,7 +232,12 @@ def build_dataset_dict(
     return dataset_dict
 
 
-class OnTheFlyDataset(Dataset):          # ← inherits from torch.utils.data.Dataset
+class OnTheFlyDataset(Dataset):
+    """
+    Standard PyTorch Dataset module engineered for lazy processing optimization.
+    Prevents host memory out-of-memory (OOM) tracking failures by only importing 
+    and vectorizing waveforms into VRAM arrays on real-time dataloader fetch requests.
+    """
     def __init__(self, samples, feature_extractor, tokenizer,
                  language="it", task="transcribe", max_label_length=448):
         self.samples = samples            # list of dicts
@@ -207,12 +251,18 @@ class OnTheFlyDataset(Dataset):          # ← inherits from torch.utils.data.Da
         return len(self.samples)
 
     def __getitem__(self, idx):
-        item = self.samples[idx]          # idx is always an integer now
+        """
+        Lazily resolves data arrays on background worker requests.
+        """
+        item = self.samples[idx]
+        # Load waveform arrays dynamically from disk storage paths
         audio_array, sr = librosa.load(item["audio"], sr=16000)
+        # Calculate matching Mel spectrum arrays
         input_features = self.feature_extractor(
             audio_array, sampling_rate=16000
         ).input_features[0]
 
+        # Convert label text strings into vocabulary index sequence chains
         labels = self.tokenizer(
             item["sentence"],
             truncation=True,
@@ -227,21 +277,27 @@ class OnTheFlyDataset(Dataset):          # ← inherits from torch.utils.data.Da
         }
 
 def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
-    """Collate function that pads input features and labels exactly as original."""
-    # Pad input features (shape: 80, time)
+    """
+    Collate function that pads input features and labels exactly as original.
+    
+    Provides explicit NumPy padding control boundaries for custom 
+    DataLoader pipeline steps.
+    """
+    # Pad input features (shape: 80, time) to maximize batch execution velocity
     input_features = [item["input_features"] for item in batch]
     max_feat_len = max(f.shape[-1] for f in input_features)
     padded_features = []
     for f in input_features:
         pad_len = max_feat_len - f.shape[-1]
         if pad_len > 0:
+            # Append zero filters to normalize asymmetric length shapes
             padding = np.zeros((f.shape[0], pad_len))
             padded = np.concatenate([f, padding], axis=-1)
         else:
             padded = f
         padded_features.append(padded)
 
-    # Pad labels with -100
+    # Pad text labels using standard ignore index integer flags (-100)
     labels = [item["labels"] for item in batch]
     max_label_len = max(len(l) for l in labels)
     padded_labels = []
@@ -249,6 +305,7 @@ def collate_fn(batch: List[Dict]) -> Dict[str, torch.Tensor]:
         pad_len = max_label_len - len(l)
         padded_labels.append(l + [-100] * pad_len)
 
+    # Package processed lists into complete Torch memory tensors
     return {
         "input_features": torch.tensor(np.array(padded_features), dtype=torch.float32),
         "labels": torch.tensor(np.array(padded_labels), dtype=torch.long)
@@ -260,8 +317,10 @@ def load_idiom_data(
 ) -> tuple[List[Dict], List[Dict]]:
     """
     Load all train & validation TSV files from all idioms.
-    Returns (train_samples, val_samples) where each is a list of dicts
-    with keys: 'audio' (path), 'sentence', 'idiom'.
+    
+    Returns:
+        tuple: (train_samples, val_samples) where each is a list of dicts
+        with keys: 'audio' (path), 'sentence', 'idiom'.
     """
     train_samples = []
     val_samples = []
@@ -281,6 +340,7 @@ def load_idiom_data(
         train_df = pd.read_csv(train_path, sep="\t")
         val_df = pd.read_csv(val_path, sep="\t")
 
+        # Ingest values into memory mappings
         for _, row in train_df.iterrows():
             audio = os.path.join(clips_path, row["path"])
             if os.path.exists(audio):
