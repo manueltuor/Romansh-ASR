@@ -1,5 +1,4 @@
 absl-py==2.4.0
-accelerate==1.14.0
 annotated-doc==0.0.4
 anyio==4.14.0
 asttokens==3.0.1
@@ -27,7 +26,7 @@ h11==0.16.0
 hf-xet==1.5.1
 httpcore==1.0.9
 httpx==0.28.1
-huggingface_hub==1.20.1
+huggingface_hub==0.36.2
 idna==3.13
 importlib_metadata==7.2.1
 importlib_resources==6.5.2
@@ -87,11 +86,10 @@ nvidia-nvshmem-cu12==3.4.5
 nvidia-nvshmem-cu13==3.4.5
 nvidia-nvtx==13.0.85
 nvidia-nvtx-cu12==12.8.90
--e git+https://github.com/manueltuor/omnilingual-asr.git@9fed2a1032f112c42bd85eac169ec7ea3cc3cd19#egg=omnilingual_asr&subdirectory=../../../omnilingual/omnilingual_asr
+-e git+https://github.com/manueltuor/omnilingual-asr.git@9fed2a1032f112c42bd85eac169ec7ea3cc3cd19#egg=omnilingual_asr
 packaging==24.2
 pandas==3.0.2
 parso==0.8.6
-peft==0.19.1
 pexpect==4.9.0
 pillow==12.2.0
 platformdirs==4.9.6
@@ -142,7 +140,6 @@ torcheval==0.0.7
 tornado==6.5.5
 tqdm==4.67.3
 traitlets==5.14.3
-transformers==5.12.1
 triton==3.4.0
 typer==0.25.1
 typing_extensions==4.15.0
