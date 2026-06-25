@@ -32,7 +32,7 @@ pythonpath = env.get("PYTHONPATH", "")
 env["PYTHONPATH"] = str(SUBMODULE_ROOT) + (f":{pythonpath}" if pythonpath else "")
 
 # Configuration
-OUTPUT_DIR = MODELS_ROOT / "omnilingual-llm-rm-1b"
+OUTPUT_DIR = MODELS_ROOT / "omnilingual-llm-rm-1b-v2"
 CONFIG_FILE = SUBMODULE_ROOT / "workflows/recipes/wav2vec2/asr/configs/romansh-llm-finetune.yaml"
 
 # GPU status
@@ -50,7 +50,7 @@ for f in [dataset_card, stats_file, CONFIG_FILE]:
     if not f.exists():
         missing.append(str(f))
 if missing:
-    print("❌ Missing required files:")
+    print("Missing required files:")
     for m in missing:
         print(f"  - {m}")
     sys.exit(1)
@@ -60,11 +60,10 @@ cmd = [
     "python", "-m", "workflows.recipes.wav2vec2.asr",
     OUTPUT_DIR,
     "--config-file", str(CONFIG_FILE),
-    "--lora",
 ]
 
 print("=" * 60)
-print("🚀 Starting Omnilingual fine‑tuning (Wav2Vec2‑Llama)")
+print("Starting Omnilingual fine‑tuning (Wav2Vec2‑Llama)")
 print(f"   Output dir : {OUTPUT_DIR}")
 print(f"   Config     : {CONFIG_FILE}")
 print(f"   GPU        : {best_gpu if torch.cuda.is_available() else 'CPU'}")
@@ -77,7 +76,7 @@ for line in process.stdout:
 process.wait()
 
 if process.returncode == 0:
-    print(f"\n✅ Training finished. Model saved in: {OUTPUT_DIR}")
+    print(f"\nTraining finished. Model saved in: {OUTPUT_DIR}")
 else:
-    print(f"\n❌ Training failed with code {process.returncode}")
+    print(f"\nTraining failed with code {process.returncode}")
     sys.exit(process.returncode)
