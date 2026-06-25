@@ -87,7 +87,7 @@ nvidia-nvshmem-cu12==3.4.5
 nvidia-nvshmem-cu13==3.4.5
 nvidia-nvtx==13.0.85
 nvidia-nvtx-cu12==12.8.90
--e git+https://github.com/facebookresearch/omnilingual-asr.git@47c28ac28402d631fbca9dd6caebf297df3fee06#egg=omnilingual_asr&subdirectory=../../../omnilingual/omnilingual_asr
+-e git+https://github.com/manueltuor/omnilingual-asr.git@9fed2a1032f112c42bd85eac169ec7ea3cc3cd19#egg=omnilingual_asr&subdirectory=../../../omnilingual/omnilingual_asr
 packaging==24.2
 pandas==3.0.2
 parso==0.8.6
