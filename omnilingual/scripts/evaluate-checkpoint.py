@@ -9,7 +9,9 @@ evaluate dialect-specific performance.
 """
 
 import os
+import sys
 import torch
+torch.backends.cudnn.enabled = False
 from tqdm import tqdm
 from pathlib import Path
 from omnilingual_asr.data import load_all_data
@@ -20,8 +22,9 @@ from omnilingual_asr.models.wav2vec2_llama.lang_ids import supported_langs
 SCRIPTS_DIR = Path(__file__).resolve().parent           # scripts/
 ROOT_DIR = SCRIPTS_DIR.parent                           # omnilingual/
 SUBMODULE_ROOT = ROOT_DIR / "omnilingual_asr"           # submodule root (contains workflows/)
+sys.path.insert(0, str(SUBMODULE_ROOT))
 
-from omnilingual_asr.utils import get_best_gpu, normalize_romansh_text
+from omnilingual_asr.utils import get_best_gpu, normalize_romansh_text, get_language_code_by_folder
 from omnilingual_asr.constants import MODELS_ROOT
 
 # select best gpu
@@ -33,16 +36,31 @@ else:
     print("No GPU available – falling back to CPU")
 
 # set your own path
-CHECKPOINT_FILE = MODELS_ROOT / "omnilingual-ctc-rm-1b-v2/ws_1.a50a2b74/checkpoints/step_5000/model/pp_00/tp_00/sdp_00.pt" 
+CHECKPOINT_FILE = MODELS_ROOT / "omnilingual-ctc-rm-1b-v2/ws_1.236d0922/checkpoints/step_30000/model/pp_00/tp_00/sdp_00.pt" 
 LANGUAGE_CODE = "roh_Latn_surs1244"
 BATCH_SIZE = 8
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Device: {DEVICE}, Lang supported: {LANGUAGE_CODE in supported_langs}")
 
+# set to true if the model is LLM based (finetuned using lora)
+LORA = False
+
 # Initialize the inference pipeline using the BASE model card. 
 base_model_card = "omniASR_CTC_1B_v2"
 print("Loading base model architecture...")
 pipeline = ASRInferencePipeline(model_card=base_model_card, device=DEVICE)
+
+from workflows.recipes.wav2vec2.asr.lora import LoraConfig, get_lora_model
+
+if LORA:
+    lora_config = LoraConfig(
+        r=8,
+        lora_alpha=16.0,
+        target_modules=["q_proj", "v_proj"],
+        lora_dropout=0.1,
+    )
+    print("Applying LoRA wrappers to the base model...")
+    get_lora_model(pipeline.model, lora_config)
 
 # Load your fine-tuned checkpoint state dict
 print("Loading fine-tuned weights...")
@@ -56,6 +74,12 @@ state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
 
 # Inject the fine-tuned weights into the pipeline's instantiated model
 pipeline.model.load_state_dict(state_dict, strict=False)
+
+if LORA:
+    for name, param in pipeline.model.named_parameters():
+        if 'lora_' in name:
+            param.data = param.data.to(torch.bfloat16)
+
 pipeline.model.eval()  # Ensure model is in inference mode
 print("Model weights loaded successfully!")
 
@@ -66,6 +90,7 @@ df_test["sentence"] = df_test["sentence"].apply(normalize_romansh_text)
 print(f"Loaded {len(df_test)} samples")
 
 audio_paths = df_test["audio_path"].tolist()
+languages = df_test["idiom"].apply(get_language_code_by_folder).to_list()
 transcriptions = []
 
 for i in tqdm(range(0, len(audio_paths), BATCH_SIZE)):
@@ -74,7 +99,7 @@ for i in tqdm(range(0, len(audio_paths), BATCH_SIZE)):
         # Transcribe the batch.
         results = pipeline.transcribe(
             batch, 
-            lang=[LANGUAGE_CODE] * len(batch), 
+            lang = languages[i:i+BATCH_SIZE],
             batch_size=len(batch)
         )
         transcriptions.extend(results)

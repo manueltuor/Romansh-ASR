@@ -56,6 +56,8 @@ After successful preprocessing, model finetuning can be started via:
 python scripts/finetune.py
 ```
 
+**Note:** If you want to mask attention to future speech, set the `STREAMING` constant to True.
+
 ## Idiom Classification
 
 After finetuning the model you can also train an idiom classifier on the encoder embeddings of the finetuned Whisper model. For this run:

@@ -39,7 +39,7 @@ from omnilingual_asr.utils import get_best_gpu, set_config_paths
 from omnilingual_asr.constants import LANG_DIST_FILE_ROOT, MODELS_ROOT
 
 #configuration
-OUTPUT_DIR = MODELS_ROOT / "omnilingual-ctc-rm-1b-v2"              # target directory
+OUTPUT_DIR = MODELS_ROOT / "omnilingual-ctc-rm-1b-v2-2"              # target directory
 CONFIG_FILE = SUBMODULE_ROOT / "workflows/recipes/wav2vec2/asr/configs/romansh-ctc-finetune.yaml"
 DATASET_CARD = SUBMODULE_ROOT / "src/omnilingual_asr/cards/datasets/romansh_dataset.yaml"
 stats_file = LANG_DIST_FILE_ROOT

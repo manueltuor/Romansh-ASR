@@ -12,6 +12,7 @@ model from a checkpoint refer to evaluate-checkpoint.py. You can change the
 """
 
 import torch
+torch.backends.cudnn.enabled = False
 from tqdm import tqdm
 from omnilingual_asr.data import load_all_data
 from omnilingual_asr.evaluate import add_metrics_columns, idiom_summary, print_evaluation_summary, show_examples

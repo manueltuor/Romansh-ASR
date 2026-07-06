@@ -47,7 +47,7 @@ pythonpath = env.get("PYTHONPATH", "")
 env["PYTHONPATH"] = str(SUBMODULE_ROOT) + (f":{pythonpath}" if pythonpath else "")
 
 # Configuration – adjust these paths if needed
-OUTPUT_DIR = MODELS_ROOT / "omnilingual-llm-rm-1b-v2"
+OUTPUT_DIR = MODELS_ROOT / "omnilingual-llm-rm-1b-v2-2"
 CONFIG_FILE = SUBMODULE_ROOT / "workflows/recipes/wav2vec2/asr/configs/romansh-llm-finetune.yaml"
 DATASET_CARD = SUBMODULE_ROOT / "src/omnilingual_asr/cards/datasets/romansh_dataset.yaml"
 

@@ -63,10 +63,16 @@ parquet-data/
 ## Finetuning
 
 After successful preprocessing we get to the finetuning part. You may set the training configuration in
-[romansh-ctc-finetune.yaml](omnilingual_asr/workflows/recipes/wav2vec2/asr/configs/romansh-ctc-finetune.yaml). The Model finetuning can be started via:
+[romansh-ctc-finetune.yaml](omnilingual_asr/workflows/recipes/wav2vec2/asr/configs/romansh-ctc-finetune.yaml). The Omnilingual CTC Model finetuning can be started via:
 
 ```bash
 python scripts/finetune.py
+```
+
+If you want to finetune the Omnilingual LLM model, finetuning can be started via:
+
+```bash
+python scripts/finetune-llm.py
 ```
 
 ## Evaluation
