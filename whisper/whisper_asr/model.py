@@ -1,4 +1,5 @@
 import torch
+import types
 from transformers import (
     WhisperFeatureExtractor,
     WhisperTokenizer,
@@ -48,3 +49,62 @@ def load_model_and_processor(
 
     model.to(device)
     return model, feature_extractor, tokenizer, processor
+
+def make_causal_forward(original_forward):
+    """Create a forward wrapper that inserts a causal mask, calling original_forward."""
+    def causal_forward(
+        self,
+        hidden_states,
+        key_value_states=None,
+        past_key_value=None,
+        attention_mask=None,
+        layer_head_mask=None,
+        output_attentions=False,
+        **kwargs,
+    ):
+        # Only apply causal mask for self‑attention (key_value_states is None)
+        if key_value_states is None:
+            bsz, tgt_len, _ = hidden_states.shape
+            causal_mask = torch.triu(
+                torch.ones(
+                    (tgt_len, tgt_len),
+                    device=hidden_states.device,
+                    dtype=torch.bool,
+                ),
+                diagonal=1,
+            )
+            if attention_mask is not None:
+                attention_mask = (
+                    attention_mask[:, None, None, :] * causal_mask[None, None, :, :]
+                )
+            else:
+                attention_mask = causal_mask[None, None, :, :]
+
+        # Call the original forward of *this specific* layer
+        return original_forward(
+            hidden_states,
+            key_value_states=key_value_states,
+            past_key_value=past_key_value,
+            attention_mask=attention_mask,
+            layer_head_mask=layer_head_mask,
+            output_attentions=output_attentions,
+            **kwargs,
+        )
+    return causal_forward
+
+
+def apply_causal_attention_mask(model):
+    """
+    Replace every encoder self‑attention layer with a causally‑masked version.
+
+    The model is modified in‑place.  After calling this function, the encoder
+    will only attend to previous time steps (no look‑ahead), making it suitable
+    for streaming / low‑latency ASR.
+
+    Args:
+        model: a HuggingFace WhisperForConditionalGeneration instance.
+    """
+    encoder = model.model.encoder
+    for layer in encoder.layers:
+        attn = layer.self_attn
+        attn.forward = types.MethodType(make_causal_forward(attn.forward), attn)

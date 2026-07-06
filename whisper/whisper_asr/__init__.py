@@ -8,7 +8,7 @@ from .data import (
     load_idiom_data
 )
 from .analysis import plot_corpus_stats, plot_wer_violin
-from .model import load_model_and_processor
+from .model import load_model_and_processor, apply_causal_attention_mask
 from .train import Trainer, TrainingConfig, get_training_args
 from .preprocessing import (
     clean_html,
@@ -59,5 +59,6 @@ __all__ = [
     "plot_wer_violin",
     "normalize_romansh_text",
     "extract_encoder_embeddings",
-    "train_classifier"
+    "train_classifier",
+    "apply_causal_attention_mask"
 ]

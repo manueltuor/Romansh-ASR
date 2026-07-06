@@ -27,15 +27,18 @@ from whisper_asr import (
     collate_fn,
     load_model_and_processor,
     compute_metrics,
-    get_training_args,
+    get_training_args
 )
 from whisper_asr.constants import MODELS_ROOT
+from whisper_asr import apply_causal_attention_mask
 
 # Suppress tokenizer parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Pin the target compute engine explicitly to an available NVIDIA GPU wrapper
 DEVICE = torch.device("cuda")
+# set to true if you want to apply attention masking to future speech
+STREAMING = False
 print(f"Using device: {DEVICE}")
 
 # load train and validation set
@@ -45,7 +48,7 @@ print(f"Train samples: {len(train_samples)}, Validation samples: {len(val_sample
 
 # Load Model & Processor
 MODEL_NAME = "openai/whisper-medium"
-OUTPUT_DIR = MODELS_ROOT / "whisper-medium-rm"
+OUTPUT_DIR = MODELS_ROOT / "whisper-medium-rm-stream"
 
 # Load the base model structure, log mel filterbanks extractor, and target tokenizers.
 # Note: "it" (Italian) is specified as a baseline proxy
@@ -54,6 +57,10 @@ model, feature_extractor, tokenizer, processor = load_model_and_processor(
 )
 
 print(f"Model loaded: {sum(p.numel() for p in model.parameters())/1e6:.1f}M params")
+
+# attention masking
+if STREAMING:
+    apply_causal_attention_mask(model)
 
 # Wrap lists in an on-the-fly generator class. Audio sampling arrays and target 
 # transcript tokens will be encoded lazily during training steps to conserve RAM.

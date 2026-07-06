@@ -53,8 +53,11 @@ pip install -r requirements.txt
 |---|---:|---:|---:|---:|---:|---:|---:|
 | **Whisper-medium baseline** | 98.08 | 104.69 | 106.68 | 94.91 | 93.12 | 89.23 | 97.97 |
 | **Whisper-medium finetuned** | 14.73 | 11.77 | 15.80 | 15.06 | 14.87 | 4.78 | 12.91 |
+| **Whisper-medium streaming** | 23.05 | 20.79 | 24.13 | 17.56 | 24.46 | 7.18 | 19.68 |
 | **Omnilingual-ctc-1b baseline** | 66.85 | 70.21 | 76.73 | 63.71 | 63.08 | 42.61 | 64.80 |
-| **Omnilingual-ctc-1b finetuned** | 28.72 | 31.83 | 34.27 | 27.13 | 24.66 | 10.41 | 26.97 |
+| **Omnilingual-ctc-1b finetuned** | 17.34 | 18.19 | 17.57 | 13.12 | 14.06 | 5.01 | 14.68 |
+| **Omnilingual-llm-1b baseline** | 40.89 | 62.66 | 71.69 | 56.52 | 52.78 | 34.35 | 54.39 |
+| **Omnilingual-llm-1b finetuned** | 30.41 | 33.56 | 36.87 | 24.54 | 26.08 | 11.81 | 27.94 |
 
 <br>
 
@@ -64,5 +67,8 @@ pip install -r requirements.txt
 |---|---:|---:|---:|---:|---:|---:|---:|
 | **Whisper-medium baseline** | 54.78 | 56.01 | 67.61 | 52.3 | 51.17 | 50.37 | 55.4 |
 | **Whisper-medium finetuned** | 4.57 | 4.04 | 5.77 | 4.61 | 5.92 | 1.57 | 4.39 |
+| **Whisper-medium streaming** | 7.75 | 7.08 | 8.74 | 5.33 | 11.74 | 2.34 | 7.12 |
 | **Omnilingual-ctc-1b baseline** | 20.64 | 25.42 | 29.82 | 18.46 | 20.06 | 11.28 | 21.42 |
-| **Omnilingual-ctc-1b finetuned** | 7.57 | 8.79 | 9.26 | 5.91 | 6.20 | 2.37 | 6.91 |
+| **Omnilingual-ctc-1b finetuned** | 4.80 | 5.01 | 4.55 | 3.18 | 4.00 | 1.46 | 3.96 |
+| **Omnilingual-llm-1b baseline** | 13.62 | 21.35 | 24.56 | 19.20 | 17.50 | 9.80 | 18.17 |
+| **Omnilingual-llm-1b finetuned** | 9.93 | 11.36 | 11.62 | 7.02 | 8.13 | 3.51 | 8.87 |
