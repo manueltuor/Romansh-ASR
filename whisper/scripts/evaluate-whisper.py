@@ -15,7 +15,7 @@ script_dir = Path(__file__).resolve().parent
 whisper_dir = script_dir.parent
 sys.path.append(str(whisper_dir))
 
-from whisper_asr import transcribe_whisper, compute_idiom_results, print_evaluation_results, load_all_data
+from whisper_asr import transcribe_whisper, compute_idiom_results, print_evaluation_results, load_all_data, apply_causal_attention_mask
 from whisper_asr.utils import get_best_gpu, normalize_romansh_text
 from whisper_asr.constants import MODELS_ROOT
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
@@ -28,12 +28,18 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 MODEL_PATH = MODELS_ROOT / "whisper-medium-rm"    # Path hook for local fine-tuned checkpoints
 DEVICE = torch.device(f"cuda:{get_best_gpu()}" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 8
+STREAMING = False
 
 print(f"Using device: {DEVICE}")
 
 # Load processing weights and the core Transformer architecture
 processor = WhisperProcessor.from_pretrained(MODEL_PATH)
 model = WhisperForConditionalGeneration.from_pretrained(MODEL_PATH).to(DEVICE)
+
+# attention masking
+if STREAMING:
+    apply_causal_attention_mask(model)
+
 print("Model loaded.")
 
 # Load test data

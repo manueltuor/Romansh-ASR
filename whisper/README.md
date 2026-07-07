@@ -68,7 +68,7 @@ python scripts/train-classifier.py
 
 ## Evaluation
 
-To evaluate a Whisper model you can use the [scripts/evaluate-whisper.py](scripts/evaluate-whisper.py) script, set the `MODEL_PATH` constant to specify which model you want to evaluate.
+To evaluate a Whisper model you can use the [scripts/evaluate-whisper.py](scripts/evaluate-whisper.py) script, set the `MODEL_PATH` constant to specify which model you want to evaluate. If your model was finetuned with future speech attention masking, set the `STREAMING` flag to true.
 
 ```bash
 python scripts/evaluate-whisper.py

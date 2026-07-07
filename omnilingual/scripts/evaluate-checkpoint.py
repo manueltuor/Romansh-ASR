@@ -46,9 +46,9 @@ print(f"Device: {DEVICE}, Lang supported: {LANGUAGE_CODE in supported_langs}")
 LORA = False
 
 # Initialize the inference pipeline using the BASE model card. 
-base_model_card = "omniASR_CTC_1B_v2"
+BASE_MODEL = "omniASR_CTC_1B_v2"    # e.g. omniASR_CTC_1B_v2 or omniASR_LLM_1B_v2
 print("Loading base model architecture...")
-pipeline = ASRInferencePipeline(model_card=base_model_card, device=DEVICE)
+pipeline = ASRInferencePipeline(model_card=BASE_MODEL, device=DEVICE)
 
 from workflows.recipes.wav2vec2.asr.lora import LoraConfig, get_lora_model
 

@@ -89,6 +89,8 @@ To evaluate your own finetuned checkpoint, set the checkpoint path in [scripts/e
 python scripts/evaluate-checkpoint.py
 ```
 
+**Note:** If your model was trained using lora, set the `LORA` flag in the script to true. Additionally set the base model of the finetuned model via the `BASE_MODEL` constant.
+
 ## Notebooks
 
 All the scripts are also available as jupyter notebooks in the `noteboks` directory. Running the notebooks in sequence is also a way of recreating the results.
