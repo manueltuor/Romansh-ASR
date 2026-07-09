@@ -2,6 +2,14 @@
 
 This project is part of my bachelors thesis at the department of computer linguistics. The goal is to create an automatic speech recognition system for Romansh the 4th official swiss national language. For this project we finetune ASR models using OpenAI's [Whisper](https://github.com/openai/whisper) and Meta's [Omnilingual](https://github.com/facebookresearch/omnilingual-asr).
 
+## Cloning Repository
+
+Clone the repository with the `--recursive` flag to ensure that the submodules are initialised correctly.
+
+```bash
+git clone --recursive https://github.com/manueltuor/Romansh-ASR.git
+```
+
 ## Data
 
 The data is from the Romansh radio and television and can be obtained via the [RTR Linguistic API](https://developer.srgssr.ch/en/apis/rtr-linguistic). It should be saved in the `data/raw-data` directory at root level. The exact pipeline for downloading the data is provided under [common/Data_Loading.ipynb](common/Data_Loading.ipynb). Your data folder should look like this after you downloaded the data:
