@@ -106,7 +106,7 @@ nvidia-nvshmem-cu12==3.4.5
 nvidia-nvshmem-cu13==3.4.5
 nvidia-nvtx==13.0.85
 nvidia-nvtx-cu12==12.8.90
--e git+https://github.com/manueltuor/omnilingual-asr.git@68dceb5077cd64ed75a76ecae557ddc90b44ad3a#egg=omnilingual_asr&subdirectory=../../../omnilingual/omnilingual_asr
+-e git+https://github.com/manueltuor/omnilingual-asr.git@47b39da8e471c60c031664865d2f40bff4ede14b#egg=omnilingual_asr&subdirectory=../../../omnilingual/omnilingual_asr
 openai-whisper==20250625
 packaging==24.2
 pandas==3.0.2
